@@ -1,21 +1,15 @@
 //-----------------------------------------------------------------------
 // <copyright file="DataPortal.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Implements the server-side DataPortal </summary>
 //-----------------------------------------------------------------------
 using System;
-#if !NETFX_CORE
-using System.Configuration;
-#endif
-#if NETFX_CORE
-using Csla.Reflection;
-#endif
+using Csla.Configuration;
 using System.Security.Principal;
 using System.Threading.Tasks;
 using Csla.Properties;
-using System.Collections.Generic;
 
 namespace Csla.Server
 {
@@ -26,6 +20,16 @@ namespace Csla.Server
   /// </summary>
   public class DataPortal : IDataPortalServer
   {
+    /// <summary>
+    /// Gets the data portal dashboard instance.
+    /// </summary>
+    public static Dashboard.IDashboard Dashboard { get; internal set; }
+
+    static DataPortal()
+    {
+      Dashboard = Server.Dashboard.DashboardFactory.GetDashboard();
+    }
+
     #region Constructors
     /// <summary>
     /// Default constructor
@@ -53,9 +57,9 @@ namespace Csla.Server
     protected DataPortal(Type authProviderType)
     {
       if (null == authProviderType)
-        throw new ArgumentNullException("authProviderType", Resources.CslaAuthenticationProviderNotSet);
+        throw new ArgumentNullException(nameof(authProviderType), Resources.CslaAuthenticationProviderNotSet);
       if (!typeof(IAuthorizeDataPortal).IsAssignableFrom(authProviderType))
-        throw new ArgumentException(Resources.AuthenticationProviderDoesNotImplementIAuthorizeDataPortal, "authProviderType");
+        throw new ArgumentException(Resources.AuthenticationProviderDoesNotImplementIAuthorizeDataPortal, nameof(authProviderType));
 
       //only construct the type if it was not constructed already
       if (null == _authorizer)
@@ -63,7 +67,7 @@ namespace Csla.Server
         lock (_syncRoot)
         {
           if (null == _authorizer)
-            _authorizer = (IAuthorizeDataPortal)Activator.CreateInstance(authProviderType);
+            _authorizer = (IAuthorizeDataPortal)Reflection.MethodCaller.CreateInstance(authProviderType);
         }
       }
 
@@ -74,7 +78,7 @@ namespace Csla.Server
           lock (_syncRoot)
           {
             if (_interceptor == null)
-              _interceptor = (IInterceptDataPortal)Activator.CreateInstance(InterceptorType);
+              _interceptor = (IInterceptDataPortal)Reflection.MethodCaller.CreateInstance(InterceptorType);
           }
         }
       }
@@ -88,11 +92,7 @@ namespace Csla.Server
 
       if (null == _authorizer)//not yet instantiated
       {
-#if SILVERLIGHT || NETFX_CORE
-        string authProvider = string.Empty;
-#else
         var authProvider = ConfigurationManager.AppSettings[cslaAuthorizationProviderAppSettingName];
-#endif
         return string.IsNullOrEmpty(authProvider) ?
           typeof(NullAuthorizer) :
           Type.GetType(authProvider, true);
@@ -107,7 +107,7 @@ namespace Csla.Server
 
     #region Data Access
 
-#if !SILVERLIGHT && !NETFX_CORE && !MONO
+#if !NETSTANDARD2_0 && !NET5_0
     private IDataPortalServer GetServicedComponentPortal(TransactionalAttribute transactionalAttribute)
     {
       switch (transactionalAttribute.TransactionIsolationLevel)
@@ -146,14 +146,20 @@ namespace Csla.Server
 
         AuthorizeRequest(new AuthorizeRequest(objectType, criteria, DataPortalOperations.Create));
         DataPortalResult result;
+        DataPortalMethodInfo method;
 
-        DataPortalMethodInfo method = DataPortalMethodCache.GetCreateMethod(objectType, criteria);
+        Reflection.ServiceProviderMethodInfo serviceProviderMethodInfo;
+        if (criteria is Server.EmptyCriteria)
+          serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<CreateAttribute>(objectType, null);
+        else
+          serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<CreateAttribute>(objectType, Server.DataPortal.GetCriteriaArray(criteria));
+        serviceProviderMethodInfo.PrepForInvocation();
+        method = serviceProviderMethodInfo.DataPortalMethodInfo;
 
         IDataPortalServer portal;
-#if !SILVERLIGHT && !NETFX_CORE
         switch (method.TransactionalAttribute.TransactionType)
         {
-#if !MONO
+#if !NETSTANDARD2_0 && !NET5_0
           case TransactionalTypes.EnterpriseServices:
             portal = GetServicedComponentPortal(method.TransactionalAttribute);
             try
@@ -174,14 +180,10 @@ namespace Csla.Server
 
             break;
           default:
-            portal = new DataPortalSelector();
+            portal = new DataPortalBroker();
             result = await portal.Create(objectType, criteria, context, isSync).ConfigureAwait(false);
             break;
         }
-#else
-        portal = new DataPortalSelector();
-        result = await portal.Create(objectType, criteria, context, isSync).ConfigureAwait(false);
-#endif
         Complete(new InterceptArgs { ObjectType = objectType, Parameter = criteria, Result = result, Operation = DataPortalOperations.Create, IsSync = isSync });
         return result;
       }
@@ -238,14 +240,21 @@ namespace Csla.Server
 
         AuthorizeRequest(new AuthorizeRequest(objectType, criteria, DataPortalOperations.Fetch));
         DataPortalResult result;
+        DataPortalMethodInfo method;
 
-        DataPortalMethodInfo method = DataPortalMethodCache.GetFetchMethod(objectType, criteria);
+        Reflection.ServiceProviderMethodInfo serviceProviderMethodInfo;
+        if (criteria is EmptyCriteria)
+          serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<FetchAttribute>(objectType, null);
+        else
+          serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<FetchAttribute>(objectType, Server.DataPortal.GetCriteriaArray(criteria));
+
+        serviceProviderMethodInfo.PrepForInvocation();
+        method = serviceProviderMethodInfo.DataPortalMethodInfo;
 
         IDataPortalServer portal;
-#if !SILVERLIGHT && !NETFX_CORE
         switch (method.TransactionalAttribute.TransactionType)
         {
-#if !MONO
+#if !NETSTANDARD2_0 && !NET5_0
           case TransactionalTypes.EnterpriseServices:
             portal = GetServicedComponentPortal(method.TransactionalAttribute);
             try
@@ -263,14 +272,10 @@ namespace Csla.Server
             result = await portal.Fetch(objectType, criteria, context, isSync).ConfigureAwait(false);
             break;
           default:
-            portal = new DataPortalSelector();
+            portal = new DataPortalBroker();
             result = await portal.Fetch(objectType, criteria, context, isSync).ConfigureAwait(false);
             break;
         }
-#else
-        portal = new DataPortalSelector();
-        result = await portal.Fetch(objectType, criteria, context, isSync).ConfigureAwait(false);
-#endif
         Complete(new InterceptArgs { ObjectType = objectType, Parameter = criteria, Result = result, Operation = DataPortalOperations.Fetch, IsSync = isSync });
         return result;
       }
@@ -355,34 +360,32 @@ namespace Csla.Server
         }
         else
         {
-          string methodName;
+          Reflection.ServiceProviderMethodInfo serviceProviderMethodInfo;
           var bbase = obj as Core.BusinessBase;
           if (bbase != null)
           {
             if (bbase.IsDeleted)
-              methodName = "DataPortal_DeleteSelf";
+              serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<DeleteSelfAttribute>(objectType, null);
             else
               if (bbase.IsNew)
-                methodName = "DataPortal_Insert";
+                serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<InsertAttribute>(objectType, null);
               else
-                methodName = "DataPortal_Update";
+                serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<UpdateAttribute>(objectType, null);
           }
           else if (obj is Core.ICommandObject)
-            methodName = "DataPortal_Execute";
+            serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<ExecuteAttribute>(objectType, null);
           else
-            methodName = "DataPortal_Update";
-          method = DataPortalMethodCache.GetMethodInfo(obj.GetType(), methodName);
+            serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<UpdateAttribute>(objectType, null);
+
+          serviceProviderMethodInfo.PrepForInvocation();
+          method = serviceProviderMethodInfo.DataPortalMethodInfo;
         }
-#if !SILVERLIGHT && !NETFX_CORE
+
         context.TransactionalType = method.TransactionalAttribute.TransactionType;
-#else
-        context.TransactionalType = method.TransactionalType;
-#endif
         IDataPortalServer portal;
-#if !SILVERLIGHT && !NETFX_CORE
         switch (method.TransactionalAttribute.TransactionType)
         {
-#if !MONO
+#if !NETSTANDARD2_0 && !NET5_0
           case TransactionalTypes.EnterpriseServices:
             portal = GetServicedComponentPortal(method.TransactionalAttribute);
             try
@@ -400,14 +403,10 @@ namespace Csla.Server
             result = await portal.Update(obj, context, isSync).ConfigureAwait(false);
             break;
           default:
-            portal = new DataPortalSelector();
+            portal = new DataPortalBroker();
             result = await portal.Update(obj, context, isSync).ConfigureAwait(false);
             break;
         }
-#else
-        portal = new DataPortalSelector();
-        result = await portal.Update(obj, context, isSync).ConfigureAwait(false);
-#endif
         Complete(new InterceptArgs { ObjectType = objectType, Parameter = obj, Result = result, Operation = operation, IsSync = isSync });
         return result;
       }
@@ -474,14 +473,19 @@ namespace Csla.Server
         }
         else
         {
-          method = DataPortalMethodCache.GetMethodInfo(objectType, "DataPortal_Delete", criteria);
+          Reflection.ServiceProviderMethodInfo serviceProviderMethodInfo;
+          if (criteria is EmptyCriteria)
+            serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<DeleteAttribute>(objectType, null);
+          else
+            serviceProviderMethodInfo = Reflection.ServiceProviderMethodCaller.FindDataPortalMethod<DeleteAttribute>(objectType, Server.DataPortal.GetCriteriaArray(criteria));
+          serviceProviderMethodInfo.PrepForInvocation();
+          method = serviceProviderMethodInfo.DataPortalMethodInfo;
         }
 
         IDataPortalServer portal;
-#if !SILVERLIGHT && !NETFX_CORE
         switch (method.TransactionalAttribute.TransactionType)
         {
-#if !MONO
+#if !NETSTANDARD2_0 && !NET5_0
           case TransactionalTypes.EnterpriseServices:
             portal = GetServicedComponentPortal(method.TransactionalAttribute);
             try
@@ -499,14 +503,10 @@ namespace Csla.Server
             result = await portal.Delete(objectType, criteria, context, isSync).ConfigureAwait(false);
             break;
           default:
-            portal = new DataPortalSelector();
+            portal = new DataPortalBroker();
             result = await portal.Delete(objectType, criteria, context, isSync).ConfigureAwait(false);
             break;
         }
-#else
-        portal = new DataPortalSelector();
-        result = await portal.Delete(objectType, criteria, context, isSync).ConfigureAwait(false);
-#endif
         Complete(new InterceptArgs { ObjectType = objectType, Parameter = criteria, Result = result, Operation = DataPortalOperations.Delete, IsSync = isSync });
         return result;
       }
@@ -559,11 +559,9 @@ namespace Csla.Server
       {
         if (!_InterceptorTypeSet)
         {
-#if !SILVERLIGHT && !NETFX_CORE
           var typeName = ConfigurationManager.AppSettings["CslaDataPortalInterceptor"];
           if (!string.IsNullOrWhiteSpace(typeName))
             InterceptorType = Type.GetType(typeName);
-#endif
           _InterceptorTypeSet = true;
         }
         return _interceptorType;
@@ -577,19 +575,30 @@ namespace Csla.Server
 
     internal void Complete(InterceptArgs e)
     {
+      var timer = ApplicationContext.ClientContext.GetValueOrNull("__dataportaltimer");
+      if (timer != null)
+      {
+        var startTime = (DateTimeOffset)timer;
+        e.Runtime = DateTimeOffset.Now - startTime;
+        Dashboard.CompleteCall(e);
+      }
+
       if (_interceptor != null)
         _interceptor.Complete(e);
     }
 
     internal void Initialize(InterceptArgs e)
     {
+      ApplicationContext.ClientContext["__dataportaltimer"] = DateTimeOffset.Now;
+      Dashboard.InitializeCall(e);
+
       if (_interceptor != null)
         _interceptor.Initialize(e);
     }
 
-    #endregion
+#endregion
 
-    #region Context
+#region Context
 
     ApplicationContext.LogicalExecutionLocations _oldLocation;
 
@@ -597,6 +606,9 @@ namespace Csla.Server
     {
       _oldLocation = Csla.ApplicationContext.LogicalExecutionLocation;
       ApplicationContext.SetLogicalExecutionLocation(ApplicationContext.LogicalExecutionLocations.Server);
+
+      if (!context.IsRemotePortal && ApplicationContext.WebContextManager != null && !ApplicationContext.WebContextManager.IsValid)
+        ApplicationContext.SetContext(context.ClientContext, context.GlobalContext);
 
       // if the dataportal is not remote then
       // do nothing
@@ -611,17 +623,10 @@ namespace Csla.Server
       ApplicationContext.SetContext(context.ClientContext, context.GlobalContext);
 
       // set the thread's culture to match the client
-#if NETFX_CORE
-      var list = new System.Collections.ObjectModel.ReadOnlyCollection<string>(new List<string> { context.ClientUICulture });
-      Windows.ApplicationModel.Resources.Core.ResourceContext.GetForCurrentView().Languages = list;
-      list = new System.Collections.ObjectModel.ReadOnlyCollection<string>(new List<string> { context.ClientCulture });
-      Windows.ApplicationModel.Resources.Core.ResourceContext.GetForCurrentView().Languages = list;
-#else
       System.Threading.Thread.CurrentThread.CurrentCulture =
         new System.Globalization.CultureInfo(context.ClientCulture);
       System.Threading.Thread.CurrentThread.CurrentUICulture =
         new System.Globalization.CultureInfo(context.ClientUICulture);
-#endif
 
       if (ApplicationContext.AuthenticationType == "Windows")
       {
@@ -633,10 +638,8 @@ namespace Csla.Server
           //ex.Action = System.Security.Permissions.SecurityAction.Deny;
           throw ex;
         }
-#if !SILVERLIGHT && !NETFX_CORE
         // Set .NET to use integrated security
         AppDomain.CurrentDomain.SetPrincipalPolicy(PrincipalPolicy.WindowsPrincipal);
-#endif
       }
       else
       {
@@ -664,9 +667,9 @@ namespace Csla.Server
         ApplicationContext.User = null;
     }
 
-    #endregion
+#endregion
 
-    #region Authorize
+#region Authorize
 
     private static object _syncRoot = new object();
     private static IAuthorizeDataPortal _authorizer = null;
@@ -706,7 +709,7 @@ namespace Csla.Server
       { /* default is to allow all requests */ }
     }
 
-    #endregion
+#endregion
 
     internal static DataPortalException NewDataPortalException(string message, Exception innerException, object businessObject)
     {
@@ -716,6 +719,60 @@ namespace Csla.Server
       throw new DataPortalException(
         message,
         innerException, new DataPortalResult(businessObject));
+    }
+
+    /// <summary>
+    /// Converts a params array to a single 
+    /// serializable criteria value.
+    /// </summary>
+    /// <param name="criteria">Params array</param>
+    /// <returns></returns>
+    public static object GetCriteriaFromArray(params object[] criteria)
+    {
+      var clength = 0;
+      if (criteria != null)
+        if (criteria.GetType().Equals(typeof(object[])))
+          clength = criteria.GetLength(0);
+        else
+          return criteria;
+
+      if (criteria == null || (clength == 1 && criteria[0] == null))
+        return NullCriteria.Instance;
+      else if (clength == 0)
+        return EmptyCriteria.Instance;
+      else if (clength == 1)
+        return criteria[0];
+      else
+        return new Core.MobileList<object>(criteria);
+    }
+
+    /// <summary>
+    /// Converts a single serializable criteria value
+    /// into an array of type object.
+    /// </summary>
+    /// <param name="criteria">Single serializble criteria value</param>
+    /// <returns></returns>
+    public static object[] GetCriteriaArray(object criteria)
+    {
+      if (criteria == null)
+        return null;
+      else if (criteria is EmptyCriteria)
+        return Array.Empty<object>();
+      else if (criteria is NullCriteria)
+        return new object[] { null };
+      else if (criteria.GetType().Equals(typeof(object[])))
+      {
+        var array = (object[])criteria;
+        var clength = array.GetLength(0);
+        if (clength == 1 && array[0] is EmptyCriteria)
+          return Array.Empty<object>();
+        else
+          return array;
+      }
+      else if (criteria is Core.MobileList<object> list)
+        return list.ToArray();
+      else
+        return new object[] { criteria };
     }
   }
 }

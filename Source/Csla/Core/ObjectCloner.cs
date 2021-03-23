@@ -1,13 +1,13 @@
 //-----------------------------------------------------------------------
 // <copyright file="ObjectCloner.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This class provides an implementation of a deep</summary>
 //-----------------------------------------------------------------------
+using Csla.Serialization;
 using System;
 using System.IO;
-using Csla.Serialization;
 
 namespace Csla.Core
 {
@@ -27,11 +27,15 @@ namespace Csla.Core
     /// <para>The serialization is performed using the formatter
     /// specified in the application's configuration file
     /// using the CslaSerializationFormatter key.</para>
-    /// <para>The default is to use the 
-    /// <see cref="System.Runtime.Serialization.Formatters.Binary.BinaryFormatter" />
+    /// <para>In full .NET the default is to use the 
+    /// System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
     /// </para>. You may also choose to use the Microsoft .NET 3.0
-    /// <see cref="System.Runtime.Serialization.NetDataContractSerializer">
-    /// NetDataContractSerializer</see> provided as part of WCF.
+    /// System.Runtime.Serialization.NetDataContractSerializer
+    /// NetDataContractSerializer provided as part of WCF.
+    /// <para>In UWP and Blazor the only
+    /// option is to use the CSLA .NET MobileFormatter
+    /// for serialization as the other serializers don't
+    /// exist.</para>
     /// </remarks>
     public static object Clone(object obj)
     {

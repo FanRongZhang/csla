@@ -1,18 +1,15 @@
 //-----------------------------------------------------------------------
 // <copyright file="Utilities.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Contains utility methods used by the</summary>
 //-----------------------------------------------------------------------
 using System;
-using System.ComponentModel;
 using System.Reflection;
-using System.Xml;
-using System.IO;
-using System.Runtime.Serialization;
-using System.Text;
 using Csla.Reflection;
+using System.ComponentModel;
+using Csla.Properties;
 
 namespace Csla
 {
@@ -97,10 +94,11 @@ namespace Csla
         result = listType.GetElementType();
       else
       {
-        DefaultMemberAttribute indexer =
+        var indexer =
           (DefaultMemberAttribute)Attribute.GetCustomAttribute(
           listType, typeof(DefaultMemberAttribute));
         if (indexer != null)
+        {
           foreach (PropertyInfo prop in listType.GetProperties(
             BindingFlags.Public |
             BindingFlags.Instance |
@@ -109,6 +107,11 @@ namespace Csla
             if (prop.Name == indexer.MemberName)
               result = Utilities.GetPropertyType(prop.PropertyType);
           }
+        }
+        if (result == null)
+        {
+          result = listType.GetMethod("get_Item")?.ReturnType;
+        }
       }
       return result;
     }
@@ -167,7 +170,20 @@ namespace Csla
         desiredType = Utilities.GetPropertyType(desiredType);
       }
 
-      if (desiredType.IsEnum && (valueType.Equals(typeof(string)) || Enum.GetUnderlyingType(desiredType).Equals(valueType)))
+      if (desiredType.IsEnum)
+      {
+        if (value is byte? && ((byte?) value).HasValue)
+          return System.Enum.Parse(desiredType, ((byte?) value).Value.ToString());
+        if (value is short? && ((short?) value).HasValue)
+          return System.Enum.Parse(desiredType, ((short?) value).Value.ToString());
+        if (value is int? && ((int?) value).HasValue)
+          return System.Enum.Parse(desiredType, ((int?) value).Value.ToString());
+        if (value is long? && ((long?) value).HasValue)
+          return System.Enum.Parse(desiredType, ((long?) value).Value.ToString());
+      }
+
+      if (desiredType.IsEnum && 
+        (valueType.Equals(typeof(string)) || Enum.GetUnderlyingType(desiredType).Equals(valueType)))
         return System.Enum.Parse(desiredType, value.ToString());
 
       if (desiredType.Equals(typeof(SmartDate)) && oldValue != null)
@@ -198,13 +214,15 @@ namespace Csla
       catch
       {
         TypeConverter cnv = TypeDescriptor.GetConverter(desiredType);
+        TypeConverter cnv1 = TypeDescriptor.GetConverter(valueType);
         if (cnv != null && cnv.CanConvertFrom(valueType))
           return cnv.ConvertFrom(value);
+        else if (cnv1 != null && cnv1.CanConvertTo(desiredType))
+          return cnv1.ConvertTo(value, desiredType);
         else
           throw;
       }
     }
-
 
     /// <summary>
     /// Attempts to coerce a value of one type into
@@ -244,6 +262,52 @@ namespace Csla
     }
 
     #endregion
+
+    internal static void ThrowIfAsyncMethodOnSyncClient(bool isSync, System.Reflection.MethodInfo method)
+    {
+      if (isSync
+        && ApplicationContext.ExecutionLocation != ApplicationContext.ExecutionLocations.Server
+        && MethodCaller.IsAsyncMethod(method))
+      {
+        throw new NotSupportedException(string.Format(Resources.AsyncMethodOnSyncClientNotAllowed, method.Name));
+      }
+    }
+
+    /// <summary>
+    /// Throws an exception if a synchronous data portal call is trying to invoke an asynchronous method on the client.
+    /// </summary>
+    /// <param name="isSync">True if the client-side proxy should synchronously invoke the server.</param>
+    /// <param name="obj">Object containing method.</param>
+    /// <param name="methodName">Name of the method.</param>
+    /// <returns></returns>
+    internal static void ThrowIfAsyncMethodOnSyncClient(bool isSync, object obj, string methodName)
+    {
+      if (isSync
+        && ApplicationContext.ExecutionLocation != ApplicationContext.ExecutionLocations.Server
+        && MethodCaller.IsAsyncMethod(obj, methodName))
+      {
+        throw new NotSupportedException(string.Format(Resources.AsyncMethodOnSyncClientNotAllowed, methodName));
+      }
+    }
+
+    /// <summary>
+    /// Throws an exception if a synchronous data portal call is trying to invoke an asynchronous method on the client.
+    /// </summary>
+    /// <param name="isSync">True if the client-side proxy should synchronously invoke the server.</param>
+    /// <param name="obj">Object containing method.</param>
+    /// <param name="methodName">Name of the method.</param>
+    /// <param name="parameters">
+    /// Parameters to pass to method.
+    /// </param>
+    internal static void ThrowIfAsyncMethodOnSyncClient(bool isSync, object obj, string methodName, params object[] parameters)
+    {
+      if (isSync
+        && ApplicationContext.ExecutionLocation != ApplicationContext.ExecutionLocations.Server
+        && MethodCaller.IsAsyncMethod(obj, methodName, parameters))
+      {
+        throw new NotSupportedException(string.Format(Resources.AsyncMethodOnSyncClientNotAllowed, methodName));
+      }
+    }
   }
 
   /// <summary>

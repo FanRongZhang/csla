@@ -1,9 +1,9 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="CriteriaRequest.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
-// <summary>Message sent to the Silverlight</summary>
+// <summary>Message sent to the WCF data portal</summary>
 //-----------------------------------------------------------------------
 using System;
 using System.Runtime.Serialization;
@@ -13,8 +13,7 @@ using Csla.Core;
 namespace Csla.Server.Hosts.Mobile
 {
   /// <summary>
-  /// Message sent to the Silverlight
-  /// WCF data portal.
+  /// Message sent to the WCF data portal.
   /// </summary>
   [DataContract]
   public class CriteriaRequest

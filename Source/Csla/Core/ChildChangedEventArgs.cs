@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="ChildChangedEventArgs.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Contains event data about the changed child object.</summary>
 //-----------------------------------------------------------------------
@@ -36,7 +36,6 @@ namespace Csla.Core
     /// </summary>
     public NotifyCollectionChangedEventArgs CollectionChangedArgs { get; private set; }
 
-#if !SILVERLIGHT && !NETFX_CORE
     /// <summary>
     /// Gets the ListChangedEventArgs object from the
     /// child's ListChanged event, if the child is a
@@ -61,7 +60,6 @@ namespace Csla.Core
     {
       this.ListChangedArgs = listArgs;
     }
-#endif
 
     /// <summary>
     /// Creates an instance of the object.

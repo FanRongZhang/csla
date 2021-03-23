@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="AuthorizationRuleManager.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Manages the list of authorization </summary>
 //-----------------------------------------------------------------------
@@ -20,78 +20,46 @@ namespace Csla.Rules
   /// </summary>
   public class AuthorizationRuleManager
   {
-#if !SILVERLIGHT && !NETFX_CORE
     private static Lazy<System.Collections.Concurrent.ConcurrentDictionary<RuleSetKey, AuthorizationRuleManager>> _perTypeRules =
       new Lazy<System.Collections.Concurrent.ConcurrentDictionary<RuleSetKey, AuthorizationRuleManager>>();
 
     internal static AuthorizationRuleManager GetRulesForType(Type type, string ruleSet)
     {
-      if (ruleSet == ApplicationContext.DefaultRuleSet) ruleSet = null;
+      type = ApplicationContext.DataPortalActivator.ResolveType(type);
+
+      if (ruleSet == ApplicationContext.DefaultRuleSet)
+        ruleSet = null;
 
       var key = new RuleSetKey { Type = type, RuleSet = ruleSet };
       var result = _perTypeRules.Value.GetOrAdd(key, (t) => { return new AuthorizationRuleManager(); });
       InitializePerTypeRules(result, type);
       return result;
     }
-#else
-    private static Dictionary<RuleSetKey, AuthorizationRuleManager> _perTypeRules = new Dictionary<RuleSetKey, AuthorizationRuleManager>();
 
-    internal static AuthorizationRuleManager GetRulesForType(Type type, string ruleSet)
-    {
-      // use null if RuleSet is "default" 
-      if (ruleSet == ApplicationContext.DefaultRuleSet) ruleSet = null;
-
-      AuthorizationRuleManager result = null;
-      var key = new RuleSetKey { Type = type, RuleSet = ruleSet };
-      var found = false;
-      try
-      {
-        found = _perTypeRules.TryGetValue(key, out result);
-      }
-      catch
-      { /* failure will drop into !found block */ }
-      if (!found)
-      {
-        lock (_perTypeRules)
-        {
-          if (!_perTypeRules.TryGetValue(key, out result))
-          {
-            result = new AuthorizationRuleManager();
-            _perTypeRules.Add(key, result);
-          }
-        }
-      }
-      InitializePerTypeRules(result, type);
-      return result;
-    }
-#endif
-
-    internal static AuthorizationRuleManager GetRulesForType(Type type)
-    {
-      return GetRulesForType(type, null);
-    }
+    private bool InitializingPerType { get; set; }
 
     private static void InitializePerTypeRules(AuthorizationRuleManager mgr, Type type)
     {
       if (!mgr.InitializedPerType)
         lock (mgr)
-          if (!mgr.InitializedPerType)
+          if (!mgr.InitializedPerType && !mgr.InitializingPerType)
           {
-            mgr.InitializedPerType = true;
             // Only call AddObjectAuthorizationRules when there are no rules for this type
             if (RulesExistForType(type))
             {
+              mgr.InitializedPerType = true;
               return;
             }
 
             try
             {
+              mgr.InitializingPerType = true;
+
               // invoke method to add auth roles
-              const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
-              System.Reflection.MethodInfo method = type.GetMethod("AddObjectAuthorizationRules", flags);
+              System.Reflection.MethodInfo method = FindObjectAuthorizationRulesMethod(type);
               if (method != null)
                 method.Invoke(null, null);
-
+              mgr.InitializedPerType = true;
             }
             catch (Exception)
             {
@@ -99,7 +67,26 @@ namespace Csla.Rules
               CleanupRulesForType(type);
               throw;  // and rethrow the exception
             }
+            finally
+            {
+              mgr.InitializingPerType = false;
+            }
           }
+    }
+
+    private static System.Reflection.MethodInfo FindObjectAuthorizationRulesMethod(Type type)
+    {
+      System.Reflection.MethodInfo method;
+      method = type.GetMethods().Where(
+        m => m.IsStatic && m.CustomAttributes.Where(
+        a => a.AttributeType == typeof(ObjectAuthorizationRulesAttribute)).Any()).
+        FirstOrDefault();
+      if (method == null)
+      {
+        const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy;
+        method = type.GetMethod("AddObjectAuthorizationRules", flags);
+      }
+      return method;
     }
 
     private static bool RulesExistForType(Type type)
@@ -107,12 +94,7 @@ namespace Csla.Rules
       lock (_perTypeRules)
       {
         // the first RuleSet is already added to list when this check is executed so so if count > 1 then we have already initialized type rules.
-#if !SILVERLIGHT && !NETFX_CORE
         return _perTypeRules.Value.Count(value => value.Key.Type == type) > 1;
-#else
-
-        return (_perTypeRules.Count(value => value.Key.Type == type)) > 1;
-#endif
       }
 
     }
@@ -123,20 +105,12 @@ namespace Csla.Rules
       {
 
         // the first RuleSet is already added to list when this check is executed so so if count > 1 then we have already initialized type rules.
-#if !SILVERLIGHT && !NETFX_CORE
         var typeRules = _perTypeRules.Value.Where(value => value.Key.Type == type);
         foreach (var key in typeRules)
         {
           AuthorizationRuleManager manager;
           _perTypeRules.Value.TryRemove(key.Key, out manager);
         }
-#else
-        var typeRules = _perTypeRules.Where(value => value.Key.Type == type).ToArray();
-        foreach (var key in typeRules)
-        {
-          _perTypeRules.Remove(key.Key);
-        }
-#endif
       }
     }
 

@@ -1,12 +1,11 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="ICheckRules.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>  Defines the common methods for any business object which exposes means to supress and check business rules.</summary>
 //-----------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using Csla.Rules;
 
 namespace Csla.Core
@@ -31,6 +30,11 @@ namespace Csla.Core
     /// Invokes all rules for the business type.
     /// </summary>
     void CheckRules();
+
+    /// <summary>
+    /// Invokes all rules for the business type.
+    /// </summary>
+    Task CheckRulesAsync();
 
     /// <summary>
     /// Gets the broken rules collection

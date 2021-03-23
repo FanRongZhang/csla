@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="NameValueListObj.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -14,11 +14,6 @@ namespace Csla.Test.Basic
     [Serializable()]
     public class NameValueListObj : NameValueListBase<int, string>
     {
-        private NameValueListObj()
-        {
-            //require factory method
-        }
-
         #region "factory methods"
 
         public static NameValueListObj GetNameValueListObj()

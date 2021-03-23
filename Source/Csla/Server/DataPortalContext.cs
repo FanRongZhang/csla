@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="DataPortalContext.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Provides consistent context information between the client</summary>
 //-----------------------------------------------------------------------
@@ -9,7 +9,6 @@ using System;
 using System.Security.Principal;
 using System.Collections.Specialized;
 using Csla.Core;
-using Csla.Serialization;
 
 namespace Csla.Server
 {
@@ -41,7 +40,7 @@ namespace Csla.Server
     }
 
     /// <summary>
-    /// Returns <see langword="true" /> if the 
+    /// Returns true if the 
     /// server-side DataPortal is running
     /// on a remote server via remoting.
     /// </summary>
@@ -112,15 +111,19 @@ namespace Csla.Server
         _principal = principal;
         _remotePortal = isRemotePortal;
 #if NETFX_CORE
-        var language = Windows.ApplicationModel.Resources.Core.ResourceContext.GetForCurrentView().Languages[0];
-        _clientCulture = language;
-        _clientUICulture = language;
+        _clientCulture = System.Globalization.CultureInfo.CurrentCulture.Name;
+        _clientUICulture = System.Globalization.CultureInfo.CurrentUICulture.Name;
 #else
         _clientCulture = 
           System.Threading.Thread.CurrentThread.CurrentCulture.Name;
         _clientUICulture = 
           System.Threading.Thread.CurrentThread.CurrentUICulture.Name;
 #endif
+        _clientContext = Csla.ApplicationContext.ContextManager.GetClientContext();
+        _globalContext = Csla.ApplicationContext.ContextManager.GetGlobalContext();
+      }
+      else if (ApplicationContext.WebContextManager != null && ApplicationContext.WebContextManager.IsValid)
+      {
         _clientContext = Csla.ApplicationContext.ContextManager.GetClientContext();
         _globalContext = Csla.ApplicationContext.ContextManager.GetGlobalContext();
       }
@@ -146,18 +149,18 @@ namespace Csla.Server
     }
 
     /// <summary>
-    /// Default constructor for use by MobileFormatter.
+    /// Default constructor for use by SerializationFormatterFactory.GetFormatter().
     /// </summary>
     public DataPortalContext()
     { }
 
     void Serialization.Mobile.IMobileObject.GetState(Serialization.Mobile.SerializationInfo info)
     {
-      info.AddValue("principal", Csla.Serialization.Mobile.MobileFormatter.Serialize(_principal));
-      info.AddValue("clientContext", Csla.Serialization.Mobile.MobileFormatter.Serialize(_clientContext));
+      info.AddValue("principal", Csla.Serialization.SerializationFormatterFactory.GetFormatter().Serialize(_principal));
+      info.AddValue("clientContext", Csla.Serialization.SerializationFormatterFactory.GetFormatter().Serialize(_clientContext));
       info.AddValue("clientCulture", _clientCulture);
       info.AddValue("clientUICulture", _clientUICulture);
-      info.AddValue("globalContext", Csla.Serialization.Mobile.MobileFormatter.Serialize(_globalContext));
+      info.AddValue("globalContext", Csla.Serialization.SerializationFormatterFactory.GetFormatter().Serialize(_globalContext));
       info.AddValue("isRemotePortal", _remotePortal);
     }
 
@@ -167,11 +170,11 @@ namespace Csla.Server
 
     void Serialization.Mobile.IMobileObject.SetState(Serialization.Mobile.SerializationInfo info)
     {
-      _principal = (IPrincipal)Csla.Serialization.Mobile.MobileFormatter.Deserialize(info.GetValue<byte[]>("principal"));
-      _clientContext = (ContextDictionary)Csla.Serialization.Mobile.MobileFormatter.Deserialize(info.GetValue<byte[]>("clientContext"));
+      _principal = (IPrincipal)Csla.Serialization.SerializationFormatterFactory.GetFormatter().Deserialize(info.GetValue<byte[]>("principal"));
+      _clientContext = (ContextDictionary)Csla.Serialization.SerializationFormatterFactory.GetFormatter().Deserialize(info.GetValue<byte[]>("clientContext"));
       _clientCulture = info.GetValue<string>("clientCulture");
       _clientUICulture = info.GetValue<string>("clientUICulture");
-      _globalContext = (ContextDictionary)Csla.Serialization.Mobile.MobileFormatter.Deserialize(info.GetValue<byte[]>("globalContext")); ;
+      _globalContext = (ContextDictionary)Csla.Serialization.SerializationFormatterFactory.GetFormatter().Deserialize(info.GetValue<byte[]>("globalContext")); ;
       _remotePortal = info.GetValue<bool>("isRemotePortal");
     }
 

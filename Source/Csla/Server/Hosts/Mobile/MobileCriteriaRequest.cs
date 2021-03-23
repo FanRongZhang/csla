@@ -1,9 +1,9 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="MobileCriteriaRequest.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
-// <summary>Class that will be used to execute a request from a Silverlight client.</summary>
+// <summary>Class that will be used to execute a request from a client.</summary>
 //-----------------------------------------------------------------------
 using System;
 using Csla.Core;
@@ -12,7 +12,7 @@ using System.Security.Principal;
 namespace Csla.Server.Hosts.Mobile
 {
   /// <summary>
-  /// Class that will be used to execute a request from a Silverlight client.
+  /// Class that will be used to execute a request from a client.
   /// This will inlcude Execute, Fetch, Create and Delete requests
   /// </summary>
   public class MobileCriteriaRequest : IMobileRequest

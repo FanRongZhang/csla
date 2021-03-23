@@ -1,7 +1,8 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETFX_CORE
+//-----------------------------------------------------------------------
 // <copyright file="WcfErrorInfo.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Message containing details about any</summary>
 //-----------------------------------------------------------------------
@@ -69,3 +70,4 @@ namespace Csla.Server.Hosts.Mobile
     }
   }
 }
+#endif

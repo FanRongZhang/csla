@@ -1,13 +1,13 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETSTANDARD2_0 && !NET5_0
+//-----------------------------------------------------------------------
 // <copyright file="ObjectContextManager.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Provides an automated way to reuse </summary>
 //-----------------------------------------------------------------------
-#if !MONO
 using System;
-using System.Configuration;
+using Csla.Configuration;
 using System.Data.Objects;
 using Csla.Properties;
 
@@ -104,10 +104,10 @@ namespace Csla.Data
       {
         var connection = ConfigurationManager.ConnectionStrings[database];
         if (connection == null)
-          throw new ConfigurationErrorsException(String.Format(Resources.DatabaseNameNotFound, database));
+          throw new System.Configuration.ConfigurationErrorsException(String.Format(Resources.DatabaseNameNotFound, database));
         var conn = ConfigurationManager.ConnectionStrings[database].ConnectionString;
         if (string.IsNullOrEmpty(conn))
-          throw new ConfigurationErrorsException(String.Format(Resources.DatabaseNameNotFound, database));
+          throw new System.Configuration.ConfigurationErrorsException(String.Format(Resources.DatabaseNameNotFound, database));
         database = conn;
       }
 
@@ -135,7 +135,7 @@ namespace Csla.Data
       _label = label;
       _connectionString = connectionString;
 
-      _context = (C)(Activator.CreateInstance(typeof(C), connectionString));
+      _context = (C)(Reflection.MethodCaller.CreateInstance(typeof(C), connectionString));
       _context.Connection.Open();
     }
 
@@ -190,7 +190,7 @@ namespace Csla.Data
 
     }
 
-    #endregion
+#endregion
 
 #region  IDisposable
 
@@ -204,7 +204,7 @@ namespace Csla.Data
       DeRef();
     }
 
-    #endregion
+#endregion
 
   }
 }

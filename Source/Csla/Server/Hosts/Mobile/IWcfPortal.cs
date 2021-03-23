@@ -1,11 +1,11 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETSTANDARD2_0 && !NET5_0
+//-----------------------------------------------------------------------
 // <copyright file="IWcfPortal.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Defines the service contract for the WCF data</summary>
 //-----------------------------------------------------------------------
-using System;
 using System.ServiceModel;
 using System.Threading.Tasks;
 
@@ -18,32 +18,6 @@ namespace Csla.Server.Hosts.Mobile
   [ServiceContract(Namespace = "http://ws.lhotka.net/WcfDataPortal")]
   public interface IWcfPortal
   {
-#if NET40
-    /// <summary>
-    /// Create a new business object.
-    /// </summary>
-    /// <param name="request">The request parameter object.</param>
-    [OperationContract]
-    WcfResponse Create(CriteriaRequest request);
-    /// <summary>
-    /// Get an existing business object.
-    /// </summary>
-    /// <param name="request">The request parameter object.</param>
-    [OperationContract]
-    WcfResponse Fetch(CriteriaRequest request);
-    /// <summary>
-    /// Update a business object.
-    /// </summary>
-    /// <param name="request">The request parameter object.</param>
-    [OperationContract]
-    WcfResponse Update(UpdateRequest request);
-    /// <summary>
-    /// Delete a business object.
-    /// </summary>
-    /// <param name="request">The request parameter object.</param>
-    [OperationContract]
-    WcfResponse Delete(CriteriaRequest request);
-#else
     /// <summary>
     /// Create a new business object.
     /// </summary>
@@ -68,6 +42,6 @@ namespace Csla.Server.Hosts.Mobile
     /// <param name="request">The request parameter object.</param>
     [OperationContract]
     Task<WcfResponse> Delete(CriteriaRequest request);
-#endif
   }
 }
+#endif

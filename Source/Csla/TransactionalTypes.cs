@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="TransactionalTypes.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Provides a list of possible transactional</summary>
 //-----------------------------------------------------------------------
@@ -15,19 +15,6 @@ namespace Csla
   /// </summary>
   public enum TransactionalTypes
   {
-#if !SILVERLIGHT && !NETFX_CORE
-    /// <summary>
-    /// Causes the server-side DataPortal to
-    /// use Enterprise Services (COM+) transactions.
-    /// </summary>
-    EnterpriseServices,
-    /// <summary>
-    /// Causes the server-side DataPortal to
-    /// use System.Transactions TransactionScope
-    /// style transactions.
-    /// </summary>
-    TransactionScope,
-#endif
     /// <summary>
     /// Causes the server-side DataPortal to
     /// use no explicit transactional technology.
@@ -38,6 +25,20 @@ namespace Csla
     /// include ADO.NET transactions and System.Transactions
     /// TransactionScope.
     /// </remarks>
-    Manual
+    Manual,
+    /// <summary>
+    /// Causes the server-side DataPortal to
+    /// use System.Transactions TransactionScope
+    /// style transactions.
+    /// </summary>
+    TransactionScope
+#if !NETSTANDARD2_0 && !NET5_0
+    ,
+    /// <summary>
+    /// Causes the server-side DataPortal to
+    /// use Enterprise Services (COM+) transactions.
+    /// </summary>
+    EnterpriseServices
+#endif
   }
 }

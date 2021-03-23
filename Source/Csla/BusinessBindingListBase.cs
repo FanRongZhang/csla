@@ -1,17 +1,14 @@
 //-----------------------------------------------------------------------
 // <copyright file="BusinessBindingListBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This is the base class from which most business collections</summary>
 //-----------------------------------------------------------------------
 using System;
 using System.ComponentModel;
 using System.Collections.Generic;
-using System.Runtime.Serialization;
 using Csla.Properties;
-using System.Linq;
-using System.Linq.Expressions;
 using Csla.Core;
 using System.Threading.Tasks;
 
@@ -34,20 +31,19 @@ namespace Csla
     where T : BusinessBindingListBase<T, C>
     where C : Core.IEditableBusinessObject
   {
-    #region Constructors
 
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
     protected BusinessBindingListBase()
     {
+      InitializeIdentity();
       Initialize();
       this.AllowNew = true;
     }
 
-    #endregion
 
-    #region Initialize
+#region Initialize
 
     /// <summary>
     /// Override this method to set up event handlers so user
@@ -59,9 +55,43 @@ namespace Csla
 
     #endregion
 
+    #region Identity
+
+    private int _identity = -1;
+
+    int IBusinessObject.Identity
+    {
+      get { return _identity; }
+    }
+
+    private void InitializeIdentity()
+    {
+      _identity = ((IParent)this).GetNextIdentity(_identity);
+    }
+
+    [NonSerialized]
+    [NotUndoable]
+    private IdentityManager _identityManager;
+
+    int IParent.GetNextIdentity(int current)
+    {
+      if (this.Parent != null)
+      {
+        return this.Parent.GetNextIdentity(current);
+      }
+      else
+      {
+        if (_identityManager == null)
+          _identityManager = new IdentityManager();
+        return _identityManager.GetNextIdentity(current);
+      }
+    }
+
+    #endregion
+
     #region IsDirty, IsValid, IsSavable
 
-        /// <summary>
+    /// <summary>
     /// Gets a value indicating whether this object's data has been changed.
     /// </summary>
     bool Core.ITrackStatus.IsSelfDirty
@@ -74,6 +104,7 @@ namespace Csla
     /// </summary>
     [Browsable(false)]
     [System.ComponentModel.DataAnnotations.Display(AutoGenerateField = false)]
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
     public bool IsDirty
     {
       get
@@ -113,6 +144,7 @@ namespace Csla
     /// </summary>
     [Browsable(false)]
     [System.ComponentModel.DataAnnotations.Display(AutoGenerateField = false)]
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
     public virtual bool IsValid
     {
       get
@@ -128,7 +160,7 @@ namespace Csla
     }
 
     /// <summary>
-    /// Returns <see langword="true" /> if this object is both dirty and valid.
+    /// Returns true if this object is both dirty and valid.
     /// </summary>
     /// <returns>A value indicating if this object is both dirty and valid.</returns>
     [Browsable(false)]
@@ -142,9 +174,9 @@ namespace Csla
       }
     }
 
-    #endregion
+#endregion
 
-    #region Begin/Cancel/ApplyEdit
+#region Begin/Cancel/ApplyEdit
 
     /// <summary>
     /// Starts a nested edit on the object.
@@ -238,9 +270,9 @@ namespace Csla
       // when a child has its edits applied
     }
 
-    #endregion
+#endregion
 
-    #region N-level undo
+#region N-level undo
 
     void Core.IUndoableObject.CopyState(int parentEditLevel, bool parentBindingEdit)
     {
@@ -263,7 +295,7 @@ namespace Csla
     private void CopyState(int parentEditLevel)
     {
       if (this.EditLevel + 1 > parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "CopyState"));
+        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "CopyState"), this.GetType().Name, _parent != null ? _parent.GetType().Name : null, this.EditLevel, parentEditLevel - 1);
 
       // we are going a level deeper in editing
       _editLevel += 1;
@@ -284,61 +316,61 @@ namespace Csla
       C child;
 
       if (this.EditLevel - 1 != parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "UndoChanges"));
+        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "UndoChanges"), this.GetType().Name, _parent != null ? _parent.GetType().Name : null, this.EditLevel, parentEditLevel + 1);
 
       // we are coming up one edit level
       _editLevel -= 1;
       if (_editLevel < 0) _editLevel = 0;
 
-      bool oldRLCE = this.RaiseListChangedEvents;
-      this.RaiseListChangedEvents = false;
       try
       {
-        // Cancel edit on all current items
-        for (int index = Count - 1; index >= 0; index--)
+        using (LoadListMode)
         {
-          child = this[index];
-
-          child.UndoChanges(_editLevel, false);
-
-          // if item is below its point of addition, remove
-          if (child.EditLevelAdded > _editLevel)
+          // Cancel edit on all current items
+          for (int index = Count - 1; index >= 0; index--)
           {
-            bool oldAllowRemove = this.AllowRemove;
-            try
-            {
-              this.AllowRemove = true;
-              _completelyRemoveChild = true;
-              RemoveAt(index);
-            }
-            finally
-            {
-              _completelyRemoveChild = false;
-              this.AllowRemove = oldAllowRemove;
-            }
-          }
-        }
+            child = this[index];
 
-        // cancel edit on all deleted items
-        for (int index = DeletedList.Count - 1; index >= 0; index--)
-        {
-          child = DeletedList[index];
-          child.UndoChanges(_editLevel, false);
-          if (child.EditLevelAdded > _editLevel)
-          {
+            child.UndoChanges(_editLevel, false);
+
             // if item is below its point of addition, remove
-            DeletedList.RemoveAt(index);
+            if (child.EditLevelAdded > _editLevel)
+            {
+              bool oldAllowRemove = this.AllowRemove;
+              try
+              {
+                this.AllowRemove = true;
+                _completelyRemoveChild = true;
+                RemoveAt(index);
+              }
+              finally
+              {
+                _completelyRemoveChild = false;
+                this.AllowRemove = oldAllowRemove;
+              }
+            }
           }
-          else
+
+          // cancel edit on all deleted items
+          for (int index = DeletedList.Count - 1; index >= 0; index--)
           {
-            // if item is no longer deleted move back to main list
-            if (!child.IsDeleted) UnDeleteChild(child);
+            child = DeletedList[index];
+            child.UndoChanges(_editLevel, false);
+            if (child.EditLevelAdded > _editLevel)
+            {
+              // if item is below its point of addition, remove
+              DeletedList.RemoveAt(index);
+            }
+            else
+            {
+              // if item is no longer deleted move back to main list
+              if (!child.IsDeleted) UnDeleteChild(child);
+            }
           }
         }
       }
       finally
       {
-        this.RaiseListChangedEvents = oldRLCE;
         OnListChanged(new ListChangedEventArgs(ListChangedType.Reset, -1));
       }
     }
@@ -346,7 +378,7 @@ namespace Csla
     private void AcceptChanges(int parentEditLevel)
     {
       if (this.EditLevel - 1 != parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "AcceptChanges"));
+        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "AcceptChanges"), this.GetType().Name, _parent != null ? _parent.GetType().Name : null, this.EditLevel, parentEditLevel + 1);
 
       // we are coming up one edit level
       _editLevel -= 1;
@@ -371,9 +403,9 @@ namespace Csla
       }
     }
 
-    #endregion
+#endregion
 
-    #region Delete and Undelete child
+#region Delete and Undelete child
 
     private MobileList<C> _deletedList;
 
@@ -419,7 +451,7 @@ namespace Csla
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> if the internal deleted list
+    /// Returns true if the internal deleted list
     /// contains the specified child object.
     /// </summary>
     /// <param name="item">Child object to check.</param>
@@ -429,22 +461,10 @@ namespace Csla
       return DeletedList.Contains(item);
     }
 
-    #endregion
+#endregion
 
-    #region Insert, Remove, Clear
+#region Insert, Remove, Clear
 
-#if SILVERLIGHT
-    /// <summary>
-    /// Override this method to create a new object that is added
-    /// to the collection. 
-    /// </summary>
-    protected override void  AddNewCore()
-    {
-      var item = DataPortal.CreateChild<C>();
-      Add(item);
-      OnAddedNew(item);
-    }
-#else
     /// <summary>
     /// Override this method to create a new object that is added
     /// to the collection. 
@@ -455,7 +475,6 @@ namespace Csla
       Add(item);
       return item;
     }
-#endif
 
     /// <summary>
     /// This method is called by a child object when it
@@ -510,15 +529,9 @@ namespace Csla
       // when an object is 'removed' it is really
       // being deleted, so do the deletion work
       C child = this[index];
-      bool oldRaiseListChangedEvents = this.RaiseListChangedEvents;
-      try
+      using (LoadListMode)
       {
-        this.RaiseListChangedEvents = false;
         base.RemoveItem(index);
-      }
-      finally
-      {
-        this.RaiseListChangedEvents = oldRaiseListChangedEvents;
       }
       if (!_completelyRemoveChild)
       {
@@ -559,10 +572,8 @@ namespace Csla
         child = this[index];
       // replace the original object with this new
       // object
-      bool oldRaiseListChangedEvents = this.RaiseListChangedEvents;
-      try
+      using (LoadListMode)
       {
-        this.RaiseListChangedEvents = false;
         // set parent reference
         item.SetParent(this);
         // set child edit level
@@ -573,19 +584,15 @@ namespace Csla
         // add to list
         base.SetItem(index, item);
       }
-      finally
-      {
-        this.RaiseListChangedEvents = oldRaiseListChangedEvents;
-      }
       if (child != null)
         DeleteChild(child);
       if (RaiseListChangedEvents)
         OnListChanged(new ListChangedEventArgs(ListChangedType.ItemChanged, index));
     }
 
-    #endregion
+#endregion
 
-    #region Cascade child events
+#region Cascade child events
 
     /// <summary>
     /// Handles any PropertyChanged event from 
@@ -630,9 +637,9 @@ namespace Csla
       return result;
     }
 
-    #endregion
+#endregion
 
-    #region Edit level tracking
+#region Edit level tracking
 
     // keep track of how many edit levels we have
     private int _editLevel;
@@ -654,9 +661,9 @@ namespace Csla
       }
     }
 
-    #endregion
+#endregion
 
-    #region IsChild
+#region IsChild
 
     [NotUndoable()]
     private bool _isChild = false;
@@ -667,6 +674,7 @@ namespace Csla
     /// <returns>True if this is a child object.</returns>
     [Browsable(false)]
     [System.ComponentModel.DataAnnotations.Display(AutoGenerateField = false)]
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
     public bool IsChild
     {
       get { return _isChild; }
@@ -691,12 +699,13 @@ namespace Csla
     /// </remarks>
     protected void MarkAsChild()
     {
+      _identity = -1;
       _isChild = true;
     }
 
-    #endregion
+#endregion
 
-    #region ICloneable
+#region ICloneable
 
     object ICloneable.Clone()
     {
@@ -722,9 +731,9 @@ namespace Csla
       return (T)GetClone();
     }
 
-    #endregion
+#endregion
 
-    #region Serialization Notification
+#region Serialization Notification
 
     [NonSerialized]
     [NotUndoable]
@@ -749,9 +758,9 @@ namespace Csla
         child.SetParent(this);
     }
 
-    #endregion
+#endregion
 
-    #region  Child Data Access
+#region  Child Data Access
 
     /// <summary>
     /// Initializes a new instance of the object
@@ -773,9 +782,7 @@ namespace Csla
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected virtual void Child_Update(params object[] parameters)
     {
-      var oldRLCE = this.RaiseListChangedEvents;
-      this.RaiseListChangedEvents = false;
-      try
+      using (LoadListMode)
       {
         foreach (var child in DeletedList)
           DataPortal.UpdateChild(child, parameters);
@@ -784,15 +791,11 @@ namespace Csla
         foreach (var child in this)
           if (child.IsDirty) DataPortal.UpdateChild(child, parameters);
       }
-      finally
-      {
-        this.RaiseListChangedEvents = oldRLCE;
-      }
     }
 
-    #endregion
+#endregion
 
-    #region Data Access
+#region Data Access
 
     /// <summary>
     /// Saves the object to the database.
@@ -804,9 +807,9 @@ namespace Csla
     /// each object's current state.
     /// </para><para>
     /// All this is contingent on <see cref="IsDirty" />. If
-    /// this value is <see langword="false"/>, no data operation occurs. 
+    /// this value is false, no data operation occurs. 
     /// It is also contingent on <see cref="IsValid" />. If this value is 
-    /// <see langword="false"/> an exception will be thrown to 
+    /// false an exception will be thrown to 
     /// indicate that the UI attempted to save an invalid object.
     /// </para><para>
     /// It is important to note that this method returns a new version of the
@@ -842,6 +845,16 @@ namespace Csla
     public async Task<T> SaveAsync()
     {
       return await SaveAsync(null, false);
+    }
+
+    /// <summary>
+    /// Saves the object to the database, merging
+    /// any resulting updates into the existing
+    /// object graph.
+    /// </summary>
+    public Task SaveAndMergeAsync()
+    {
+      throw new NotSupportedException(nameof(SaveAndMergeAsync));
     }
 
     /// <summary>
@@ -886,6 +899,7 @@ namespace Csla
     /// <summary>
     /// Starts an async operation to save the object to the database.
     /// </summary>
+    [Obsolete]
     public void BeginSave()
     {
       BeginSave(null, null);
@@ -895,6 +909,7 @@ namespace Csla
     /// Starts an async operation to save the object to the database.
     /// </summary>
     /// <param name="userState">User state object.</param>
+    [Obsolete]
     public void BeginSave(object userState)
     {
       BeginSave(null, userState);
@@ -906,6 +921,7 @@ namespace Csla
     /// <param name="handler">
     /// Method called when the operation is complete.
     /// </param>
+    [Obsolete]
     public void BeginSave(EventHandler<SavedEventArgs> handler)
     {
       BeginSave(handler, null);
@@ -918,6 +934,7 @@ namespace Csla
     /// Method called when the operation is complete.
     /// </param>
     /// <param name="userState">User state object.</param>
+    [Obsolete]
     public async void BeginSave(EventHandler<SavedEventArgs> handler, object userState)
     {
       T result = default(T);
@@ -1051,9 +1068,9 @@ namespace Csla
     {
     }
 
-    #endregion
+#endregion
 
-    #region ISavable Members
+#region ISavable Members
 
     object Csla.Core.ISavable.Save()
     {
@@ -1075,6 +1092,11 @@ namespace Csla
       return await SaveAsync();
     }
 
+    async Task ISavable.SaveAndMergeAsync(bool forceUpdate)
+    {
+      await SaveAndMergeAsync();
+    }
+
     void Csla.Core.ISavable.SaveComplete(object newObject)
     {
       OnSaved((T)newObject, null, null);
@@ -1088,6 +1110,11 @@ namespace Csla
     async Task<T> ISavable<T>.SaveAsync(bool forceUpdate)
     {
       return await SaveAsync();
+    }
+
+    async Task ISavable<T>.SaveAndMergeAsync(bool forceUpdate)
+    {
+      await SaveAndMergeAsync();
     }
 
     void Csla.Core.ISavable<T>.SaveComplete(T newObject)
@@ -1150,9 +1177,9 @@ namespace Csla
         _serializableSavedHandlers.Invoke(this, args);
     }
 
-    #endregion
+#endregion
 
-    #region  Parent/Child link
+#region  Parent/Child link
 
     [NotUndoable(), NonSerialized()]
     private Core.IParent _parent;
@@ -1166,6 +1193,7 @@ namespace Csla
     /// </remarks>
     [Browsable(false)]
     [System.ComponentModel.DataAnnotations.Display(AutoGenerateField = false)]
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public Core.IParent Parent
     {
@@ -1184,6 +1212,8 @@ namespace Csla
     protected virtual void SetParent(Core.IParent parent)
     {
       _parent = parent;
+      _identityManager = null;
+      InitializeIdentity();
     }
 
     /// <summary>
@@ -1197,9 +1227,9 @@ namespace Csla
       this.SetParent(parent);
     }
 
-    #endregion
+#endregion
 
-    #region ToArray
+#region ToArray
 
     /// <summary>
     /// Get an array containing all items in the list.
@@ -1211,9 +1241,9 @@ namespace Csla
         result.Add(item);
       return result.ToArray();
     }
-    #endregion
+#endregion
 
-    #region  ITrackStatus
+#region  ITrackStatus
 
     bool Core.ITrackStatus.IsNew
     {
@@ -1236,6 +1266,7 @@ namespace Csla
     /// </summary>
     [Browsable(false)]
     [System.ComponentModel.DataAnnotations.Display(AutoGenerateField = false)]
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
     public override bool IsBusy
     {
       get
@@ -1256,9 +1287,9 @@ namespace Csla
       }
     }
 
-    #endregion
+#endregion
 
-    #region IDataPortalTarget Members
+#region IDataPortalTarget Members
 
     void Csla.Server.IDataPortalTarget.CheckRules()
     { }
@@ -1304,9 +1335,9 @@ namespace Csla
       this.Child_OnDataPortalException(e, ex);
     }
 
-    #endregion
+#endregion
 
-    #region Mobile object overrides
+#region Mobile object overrides
 
     /// <summary>
     /// Override this method to retrieve your field values
@@ -1320,6 +1351,7 @@ namespace Csla
     {
       _isChild = info.GetValue<bool>("Csla.BusinessListBase._isChild");
       _editLevel = info.GetValue<int>("Csla.BusinessListBase._editLevel");
+      _identity = info.GetValue<int>("Csla.Core.BusinessBase._identity");
       base.OnSetState(info);
     }
 
@@ -1335,6 +1367,7 @@ namespace Csla
     {
       info.AddValue("Csla.BusinessListBase._isChild", _isChild);
       info.AddValue("Csla.BusinessListBase._editLevel", _editLevel);
+      info.AddValue("Csla.Core.BusinessBase._identity", _identity);
       base.OnGetState(info);
     }
 
@@ -1346,7 +1379,7 @@ namespace Csla
     /// Object containing the data to serialize.
     /// </param>
     /// <param name="formatter">
-    /// Reference to the current MobileFormatter.
+    /// Reference to the current SerializationFormatterFactory.GetFormatter().
     /// </param>
     [System.ComponentModel.EditorBrowsable(EditorBrowsableState.Advanced)]
     protected override void OnGetChildren(Csla.Serialization.Mobile.SerializationInfo info, Csla.Serialization.Mobile.MobileFormatter formatter)
@@ -1367,7 +1400,7 @@ namespace Csla
     /// Object containing the serialized data.
     /// </param>
     /// <param name="formatter">
-    /// Reference to the current MobileFormatter.
+    /// Reference to the current SerializationFormatterFactory.GetFormatter().
     /// </param>
     [System.ComponentModel.EditorBrowsable(EditorBrowsableState.Advanced)]
     protected override void OnSetChildren(Csla.Serialization.Mobile.SerializationInfo info, Csla.Serialization.Mobile.MobileFormatter formatter)
@@ -1380,6 +1413,6 @@ namespace Csla
       base.OnSetChildren(info, formatter);
     }
 
-    #endregion
+#endregion
   }
 }

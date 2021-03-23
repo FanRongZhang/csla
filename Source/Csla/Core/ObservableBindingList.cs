@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="ObservableBindingList.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Extends ObservableCollection with behaviors required</summary>
 //-----------------------------------------------------------------------
@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Reflection;
-using Csla.Serialization;
 using Csla.Serialization.Mobile;
 using Csla.Core.FieldManager;
 using Csla.Core;
@@ -19,6 +18,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel.DataAnnotations;
 using Csla.Properties;
+using System.Diagnostics;
 
 namespace Csla.Core
 {
@@ -89,20 +89,6 @@ namespace Csla.Core
       set { _raiseListChangedEvents = value; }
     }
 
-#if SILVERLIGHT || NETFX_CORE
-    /// <summary>
-    /// Adds a new item to this collection.
-    /// </summary>
-    public void AddNew()
-    {
-      AddNewCore();
-    }
-
-    void IObservableBindingList.AddNew()
-    {
-      AddNew();
-    }
-#else
     /// <summary>
     /// Adds a new item to this collection.
     /// </summary>
@@ -117,7 +103,6 @@ namespace Csla.Core
     {
       return AddNew();
     }
-#endif
 
     #endregion
 
@@ -235,6 +220,7 @@ namespace Csla.Core
     /// </summary>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+    [ScaffoldColumn(false)]
     public virtual bool IsBusy
     {
       get { return false; }
@@ -245,6 +231,7 @@ namespace Csla.Core
     /// </summary>
     [Browsable(false)]
     [Display(AutoGenerateField = false)]
+    [ScaffoldColumn(false)]
     public virtual bool IsSelfBusy
     {
       get { return IsBusy; }
@@ -387,9 +374,7 @@ namespace Csla.Core
       // could override if needed
     }
 
-#if !__ANDROID__ && !IOS
     [System.Runtime.Serialization.OnDeserialized]
-#endif
     private void OnDeserializedHandler(System.Runtime.Serialization.StreamingContext context)
     {
       foreach (T item in this)
@@ -465,7 +450,13 @@ namespace Csla.Core
     [EditorBrowsable(EditorBrowsableState.Never)]
     protected virtual void Child_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
-      RaiseChildChanged(sender, e, null);
+      // Issue 813
+      // MetaPropertyHasChanged calls in OnChildChanged we're leading to exponential growth in OnChildChanged calls
+      // Those notifications are for the UI. Ignore them in the parent
+      if (!(e is MetaPropertyChangedEventArgs))
+      {
+        RaiseChildChanged(sender, e, null);
+      }
     }
 
     /// <summary>
@@ -522,7 +513,7 @@ namespace Csla.Core
       }
     }
 
-#if SILVERLIGHT || NETFX_CORE
+#if (ANDROID || IOS) || NETFX_CORE
     /// <summary>
     /// Override this method to create a new object that is added
     /// to the collection. 
@@ -630,5 +621,29 @@ namespace Csla.Core
     }
 
     #endregion
+
+    [NonSerialized]
+    [NotUndoable]
+    private Stack<bool> _oldRLCE;
+
+    /// <summary>
+    /// Sets the load list mode for the list
+    /// </summary>
+    /// <param name="enabled">Enabled value</param>
+    protected override void SetLoadListMode(bool enabled)
+    {
+      if (_oldRLCE == null)
+        _oldRLCE = new Stack<bool>();
+      if (enabled)
+      {
+        _oldRLCE.Push(_raiseListChangedEvents);
+        _raiseListChangedEvents = false;
+      }
+      else
+      {
+        if (_oldRLCE.Count > 0)
+         _raiseListChangedEvents = _oldRLCE.Pop();
+      }
+    }
   }
 }

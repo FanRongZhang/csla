@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="GrandChildList.partial.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -11,8 +11,6 @@ namespace Csla.Testing.Business.EditableChildTests
 {
   public partial class GrandChildList
   {
-    private GrandChildList() { }
-
     #region Server Factories
 
     public static GrandChildList Load(Guid parentId)

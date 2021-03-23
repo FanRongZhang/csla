@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="CriteriaBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Base type from which Criteria classes can be</summary>
 //-----------------------------------------------------------------------
@@ -12,7 +12,6 @@ using System.ComponentModel;
 using System.Linq.Expressions;
 using Csla.Reflection;
 using System.Reflection;
-using Csla.Serialization;
 
 namespace Csla
 {
@@ -24,34 +23,6 @@ namespace Csla
   public abstract class CriteriaBase<T> : ManagedObjectBase
     where T : CriteriaBase<T>
   {
-#if SILVERLIGHT || NETFX_CORE
-    private static bool _forceInit = false;
-
-    /// <summary>
-    /// Creates an instance of the object. For use by
-    /// MobileFormatter only - you must provide a 
-    /// Type parameter in your code.
-    /// </summary>
-    public CriteriaBase()
-    {
-      _forceInit = _forceInit && false;
-    }
-
-    /// <summary>
-    /// Method called by MobileFormatter when an object
-    /// should be deserialized. The data should be
-    /// deserialized from the SerializationInfo parameter.
-    /// </summary>
-    /// <param name="info">
-    /// Object containing the serialized data.
-    /// </param>
-    /// <param name="mode">Serialization mode.</param>
-    protected override void OnSetState(SerializationInfo info, StateMode mode)
-    {
-      _forceInit = _forceInit && false;
-      base.OnSetState(info, mode);
-    }
-#else
     /// <summary>
     /// Initializes empty CriteriaBase. The type of
     /// business object to be created by the DataPortal
@@ -59,7 +30,6 @@ namespace Csla
     /// </summary>
     protected CriteriaBase()
     { }
-#endif
 
     #region  Register Properties
 
@@ -86,13 +56,54 @@ namespace Csla
     /// to the business object type.
     /// </summary>
     /// <typeparam name="P">Type of property</typeparam>
+    /// <param name="propertyName">Property name from nameof()</param>
+    /// <returns></returns>
+    protected static PropertyInfo<P> RegisterProperty<P>(string propertyName)
+    {
+      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), propertyName));
+    }
+
+    /// <summary>
+    /// Indicates that the specified property belongs
+    /// to the business object type.
+    /// </summary>
+    /// <typeparam name="P">Type of property</typeparam>
     /// <param name="propertyLambdaExpression">Property Expression</param>
     /// <returns></returns>
     protected static PropertyInfo<P> RegisterProperty<P>(Expression<Func<T, object>> propertyLambdaExpression)
     {
       PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
+      return RegisterProperty<P>(reflectedPropertyInfo.Name);
+    }
 
-      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name));
+    /// <summary>
+    /// Indicates that the specified property belongs
+    /// to the business object type.
+    /// </summary>
+    /// <typeparam name="P">Type of property</typeparam>
+    /// <param name="propertyLambdaExpression">Property Expression</param>
+    /// <param name="defaultValue">Default Value for the property</param>
+    /// <returns></returns>
+    [Obsolete]
+    protected static PropertyInfo<P> RegisterProperty<P>(Expression<Func<T, object>> propertyLambdaExpression, P defaultValue)
+    {
+      PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
+
+      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name, reflectedPropertyInfo.Name, defaultValue));
+    }
+
+    /// <summary>
+    /// Indicates that the specified property belongs
+    /// to the business object type.
+    /// </summary>
+    /// <typeparam name="P">Type of property</typeparam>
+    /// <param name="propertyName">Property name from nameof()</param>
+    /// <param name="relationship">Relationship with
+    /// referenced object.</param>
+    /// <returns></returns>
+    protected static PropertyInfo<P> RegisterProperty<P>(string propertyName, RelationshipTypes relationship)
+    {
+      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), propertyName, string.Empty, relationship));
     }
 
     /// <summary>
@@ -107,8 +118,20 @@ namespace Csla
     protected static PropertyInfo<P> RegisterProperty<P>(Expression<Func<T, object>> propertyLambdaExpression, RelationshipTypes relationship)
     {
       PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
+      return RegisterProperty<P>(reflectedPropertyInfo.Name, relationship);
+    }
 
-      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name, reflectedPropertyInfo.Name, relationship));
+    /// <summary>
+    /// Indicates that the specified property belongs
+    /// to the business object type.
+    /// </summary>
+    /// <typeparam name="P">Type of property</typeparam>
+    /// <param name="propertyName">Property name from nameof()</param>
+    /// <param name="friendlyName">Friendly description for a property to be used in databinding</param>
+    /// <returns></returns>
+    protected static PropertyInfo<P> RegisterProperty<P>(string propertyName, string friendlyName)
+    {
+      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), propertyName, friendlyName));
     }
 
     /// <summary>
@@ -122,8 +145,7 @@ namespace Csla
     protected static PropertyInfo<P> RegisterProperty<P>(Expression<Func<T, object>> propertyLambdaExpression, string friendlyName)
     {
       PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
-
-      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name, friendlyName));
+      return RegisterProperty<P>(reflectedPropertyInfo.Name, friendlyName);
     }
 
     /// <summary>
@@ -136,11 +158,26 @@ namespace Csla
     /// <param name="relationship">Relationship with
     /// referenced object.</param>
     /// <returns></returns>
+    [Obsolete]
     protected static PropertyInfo<P> RegisterProperty<P>(Expression<Func<T, object>> propertyLambdaExpression, string friendlyName, RelationshipTypes relationship)
     {
       PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
 
       return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name, friendlyName, relationship));
+    }
+
+    /// <summary>
+    /// Indicates that the specified property belongs
+    /// to the business object type.
+    /// </summary>
+    /// <typeparam name="P">Type of property</typeparam>
+    /// <param name="propertyName">Property name from nameof()</param>
+    /// <param name="friendlyName">Friendly description for a property to be used in databinding</param>
+    /// <param name="defaultValue">Default Value for the property</param>
+    /// <returns></returns>
+    protected static PropertyInfo<P> RegisterProperty<P>(string propertyName, string friendlyName, P defaultValue)
+    {
+      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), propertyName, friendlyName, defaultValue));
     }
 
     /// <summary>
@@ -155,8 +192,23 @@ namespace Csla
     protected static PropertyInfo<P> RegisterProperty<P>(Expression<Func<T, object>> propertyLambdaExpression, string friendlyName, P defaultValue)
     {
       PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
+      return RegisterProperty(reflectedPropertyInfo.Name, friendlyName, defaultValue);
+    }
 
-      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name, friendlyName, defaultValue));
+    /// <summary>
+    /// Indicates that the specified property belongs
+    /// to the business object type.
+    /// </summary>
+    /// <typeparam name="P">Type of property</typeparam>
+    /// <param name="propertyName">Property name from nameof()</param>
+    /// <param name="friendlyName">Friendly description for a property to be used in databinding</param>
+    /// <param name="defaultValue">Default Value for the property</param>
+    /// <param name="relationship">Relationship with
+    /// referenced object.</param>
+    /// <returns></returns>
+    protected static PropertyInfo<P> RegisterProperty<P>(string propertyName, string friendlyName, P defaultValue, RelationshipTypes relationship)
+    {
+      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), propertyName, friendlyName, defaultValue, relationship));
     }
 
     /// <summary>
@@ -173,8 +225,7 @@ namespace Csla
     protected static PropertyInfo<P> RegisterProperty<P>(Expression<Func<T, object>> propertyLambdaExpression, string friendlyName, P defaultValue, RelationshipTypes relationship)
     {
       PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
-
-      return RegisterProperty(Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name, friendlyName, defaultValue, relationship));
+      return RegisterProperty(reflectedPropertyInfo.Name, friendlyName, defaultValue, relationship);
     }
 
     #endregion

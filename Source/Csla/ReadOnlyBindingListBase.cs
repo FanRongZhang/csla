@@ -1,10 +1,27 @@
 //-----------------------------------------------------------------------
 // <copyright file="ReadOnlyBindingListBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This is the base class from which readonly collections</summary>
 //-----------------------------------------------------------------------
+#if NETFX_CORE
+using System;
+
+namespace Csla
+{
+  /// <summary>
+  /// This is the base class from which readonly collections
+  /// of readonly objects should be derived.
+  /// </summary>
+  /// <typeparam name="T">Type of the list class.</typeparam>
+  /// <typeparam name="C">Type of child objects contained in the list.</typeparam>
+  [Serializable]
+  public abstract class ReadOnlyBindingListBase<T, C> : ReadOnlyListBase<T, C>
+    where T : ReadOnlyBindingListBase<T, C>
+  { }
+}
+#else
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -28,8 +45,6 @@ namespace Csla
     where T : ReadOnlyBindingListBase<T, C>
   {
 
-    #region Constructors
-
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
@@ -38,9 +53,7 @@ namespace Csla
       Initialize();
     }
 
-    #endregion
-
-    #region Initialize
+#region Initialize
 
     /// <summary>
     /// Override this method to set up event handlers so user
@@ -50,9 +63,9 @@ namespace Csla
     protected virtual void Initialize()
     { /* allows subclass to initialize events before any other activity occurs */ }
 
-    #endregion
+#endregion
 
-    #region ICloneable
+#region ICloneable
 
     object ICloneable.Clone()
     {
@@ -79,9 +92,9 @@ namespace Csla
       return (T)GetClone();
     }
 
-    #endregion
+#endregion
 
-    #region Data Access
+#region Data Access
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "criteria")]
     private void DataPortal_Create(object criteria)
@@ -182,9 +195,9 @@ namespace Csla
     {
     }
 
-    #endregion
+#endregion
 
-    #region ToArray
+#region ToArray
 
     /// <summary>
     /// Get an array containing all items in the list.
@@ -196,9 +209,9 @@ namespace Csla
         result.Add(item);
       return result.ToArray();
     }
-    #endregion
+#endregion
 
-    #region IDataPortalTarget Members
+#region IDataPortalTarget Members
 
     void Csla.Server.IDataPortalTarget.CheckRules()
     { }
@@ -242,6 +255,7 @@ namespace Csla
       this.Child_OnDataPortalException(e, ex);
     }
 
-    #endregion
+#endregion
   }
 }
+#endif

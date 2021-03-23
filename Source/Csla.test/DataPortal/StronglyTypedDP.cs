@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="StronglyTypedDP.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -62,11 +62,6 @@ namespace Csla.Test.DataPortal
     public static void DeleteStronglyTypedDP(int id)
     {
       Csla.DataPortal.Delete<StronglyTypedDP>(new Criteria(id));
-    }
-
-    private StronglyTypedDP()
-    {
-      //prevent direct creation
     }
 
     protected void DataPortal_Create(StronglyTypedDP.Criteria criteria)

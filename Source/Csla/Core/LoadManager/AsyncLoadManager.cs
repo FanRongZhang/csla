@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="AsyncLoadManager.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -9,7 +9,6 @@ using System;
 using System.Linq;
 using System.Collections.ObjectModel;
 using Csla.Properties;
-using Csla.Serialization;
 
 namespace Csla.Core.LoadManager
 {

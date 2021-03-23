@@ -1,13 +1,16 @@
 //-----------------------------------------------------------------------
 // <copyright file="LocalProxy.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Implements a data portal proxy to relay data portal</summary>
 //-----------------------------------------------------------------------
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using Csla.Configuration;
 using Csla.Server;
+using Csla.Threading;
 
 namespace Csla.DataPortalClient
 {
@@ -18,8 +21,7 @@ namespace Csla.DataPortalClient
   /// </summary>
   public class LocalProxy : DataPortalClient.IDataPortalProxy
   {
-    private Server.IDataPortalServer _portal =
-      new Server.DataPortal();
+    private Server.IDataPortalServer _portal = new Server.DataPortal();
 
     /// <summary>
     /// Called by <see cref="DataPortal" /> to create a
@@ -40,21 +42,13 @@ namespace Csla.DataPortalClient
       }
       else
       {
-        var tcs = new TaskCompletionSource<DataPortalResult>();
-        var bw = new Csla.Threading.BackgroundWorker();
-        bw.DoWork += (s, o) =>
-        {
-          o.Result = _portal.Create(objectType, criteria, context, isSync).Result;
-        };
-        bw.RunWorkerCompleted += (s, o) =>
-        {
-          if (o.Error == null)
-            tcs.TrySetResult((DataPortalResult)o.Result);
-          else
-            tcs.TrySetException(o.Error);
-        };
-        bw.RunWorkerAsync();
-        return await tcs.Task;
+        if (!FlowSynchronizationContext || SynchronizationContext.Current == null)
+          return await Task.Run(() => this._portal.Create(objectType, criteria, context, isSync));
+        else
+          return await await Task.Factory.StartNew(() => this._portal.Create(objectType, criteria, context, isSync),
+            CancellationToken.None,
+            TaskCreationOptions.None,
+            TaskScheduler.FromCurrentSynchronizationContext());
       }
     }
 
@@ -76,21 +70,13 @@ namespace Csla.DataPortalClient
       }
       else
       {
-        var tcs = new TaskCompletionSource<DataPortalResult>();
-        var bw = new Csla.Threading.BackgroundWorker();
-        bw.DoWork += (s, o) =>
-        {
-          o.Result = _portal.Fetch(objectType, criteria, context, isSync).Result;
-        };
-        bw.RunWorkerCompleted += (s, o) =>
-        {
-          if (o.Error == null)
-            tcs.TrySetResult((DataPortalResult)o.Result);
-          else
-            tcs.TrySetException(o.Error);
-        };
-        bw.RunWorkerAsync();
-        return await tcs.Task;
+        if (!FlowSynchronizationContext || SynchronizationContext.Current == null)
+          return await Task.Run(() => this._portal.Fetch(objectType, criteria, context, isSync));
+        else
+          return await await Task.Factory.StartNew(() => this._portal.Fetch(objectType, criteria, context, isSync),
+            CancellationToken.None,
+            TaskCreationOptions.None,
+            TaskScheduler.FromCurrentSynchronizationContext());
       }
     }
 
@@ -111,21 +97,13 @@ namespace Csla.DataPortalClient
       }
       else
       {
-        var tcs = new TaskCompletionSource<DataPortalResult>();
-        var bw = new Csla.Threading.BackgroundWorker();
-        bw.DoWork += (s, o) =>
-        {
-          o.Result = _portal.Update(obj, context, isSync).Result;
-        };
-        bw.RunWorkerCompleted += (s, o) =>
-        {
-          if (o.Error == null)
-            tcs.TrySetResult((DataPortalResult)o.Result);
-          else
-            tcs.TrySetException(o.Error);
-        };
-        bw.RunWorkerAsync();
-        return await tcs.Task;
+        if (!FlowSynchronizationContext || SynchronizationContext.Current == null)
+          return await Task.Run(() => this._portal.Update(obj, context, isSync));
+        else
+          return await await Task.Factory.StartNew(() => this._portal.Update(obj, context, isSync),
+            CancellationToken.None,
+            TaskCreationOptions.None,
+            TaskScheduler.FromCurrentSynchronizationContext());
       }
     }
 
@@ -147,26 +125,18 @@ namespace Csla.DataPortalClient
       }
       else
       {
-        var tcs = new TaskCompletionSource<DataPortalResult>();
-        var bw = new Csla.Threading.BackgroundWorker();
-        bw.DoWork += (s, o) =>
-        {
-          o.Result = _portal.Delete(objectType, criteria, context, isSync).Result;
-        };
-        bw.RunWorkerCompleted += (s, o) =>
-        {
-          if (o.Error == null)
-            tcs.TrySetResult((DataPortalResult)o.Result);
-          else
-            tcs.TrySetException(o.Error);
-        };
-        bw.RunWorkerAsync();
-        return await tcs.Task;
+        if (!FlowSynchronizationContext || SynchronizationContext.Current == null)
+          return await Task.Run(() => this._portal.Delete(objectType, criteria, context, isSync));
+        else
+          return await await Task.Factory.StartNew(() => this._portal.Delete(objectType, criteria, context, isSync),
+            CancellationToken.None,
+            TaskCreationOptions.None,
+            TaskScheduler.FromCurrentSynchronizationContext());
       }
     }
 
     /// <summary>
-    /// Get a value indicating whether this proxy will invoke
+    /// Gets a value indicating whether this proxy will invoke
     /// a remote data portal server, or run the "server-side"
     /// data portal in the caller's process and AppDomain.
     /// </summary>
@@ -175,5 +145,21 @@ namespace Csla.DataPortalClient
       get { return false; }
     }
 
+    /// <summary>
+    /// Gets a value indicating whether any
+    /// synchronization context should be flowed to
+    /// child tasks. Setting this to true may restrict
+    /// or eliminate the use of background threads.
+    /// </summary>
+    public bool FlowSynchronizationContext
+    {
+      get
+      {
+        if (ConfigurationManager.AppSettings["CslaFlowSynchronizationContext"] == null)
+          return false;
+        else
+          return bool.Parse(ConfigurationManager.AppSettings["CslaFlowSynchronizationContext"]);
+      }
+    }
   }
 }

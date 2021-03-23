@@ -1,7 +1,8 @@
+#if !NETFX_CORE && !NETSTANDARD2_0 && !NET5_0
 //-----------------------------------------------------------------------
 // <copyright file="UseNetDataContractAttribute.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Specify that WCF should serialize objects in a .NET</summary>
 //-----------------------------------------------------------------------
@@ -19,7 +20,7 @@ namespace Csla.Server.Hosts.WcfChannel
   /// </summary>
   public class UseNetDataContractAttribute : Attribute, IOperationBehavior
   {
-    #region IOperationBehavior Members
+#region IOperationBehavior Members
 
     /// <summary>
     /// Not implemented.
@@ -60,7 +61,7 @@ namespace Csla.Server.Hosts.WcfChannel
     {
     }
 
-    #endregion
+#endregion
 
     private static void ReplaceDataContractSerializerOperationBehavior(OperationDescription description)
     {
@@ -74,3 +75,4 @@ namespace Csla.Server.Hosts.WcfChannel
     }
   }
 }
+#endif

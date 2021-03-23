@@ -1,20 +1,18 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETSTANDARD2_0 && !NET5_0
+//-----------------------------------------------------------------------
 // <copyright file="WcfPortal.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Exposes server-side DataPortal functionality</summary>
 //-----------------------------------------------------------------------
 using System;
-using System.Configuration;
-using Csla.Serialization.Mobile;
 using System.ServiceModel;
 using System.ServiceModel.Activation;
 using Csla.Core;
 using System.Security.Principal;
-using Csla.Properties;
-using Csla.Silverlight;
 using System.Threading.Tasks;
+using Csla.Serialization;
 
 namespace Csla.Server.Hosts.Mobile
 {
@@ -27,18 +25,14 @@ namespace Csla.Server.Hosts.Mobile
   public class WcfPortal : IWcfPortal
   {
 
-    #region IWcfPortal Members
+#region IWcfPortal Members
 
     /// <summary>
     /// Create a new business object.
     /// </summary>
     /// <param name="request">The request parameter object.</param>
     [OperationBehavior(Impersonation = ImpersonationOption.Allowed)]
-#if NET40
-    public WcfResponse Create(CriteriaRequest request)
-#else
     public async Task<WcfResponse> Create(CriteriaRequest request)
-#endif
     {
       var result = new WcfResponse();
       try
@@ -56,23 +50,19 @@ namespace Csla.Server.Hosts.Mobile
         var createRequest = new MobileCriteriaRequest(
           request.TypeName,
           criteria,
-          (IPrincipal)MobileFormatter.Deserialize(request.Principal),
-          (ContextDictionary)MobileFormatter.Deserialize(request.GlobalContext),
-          (ContextDictionary)MobileFormatter.Deserialize(request.ClientContext),
+          (IPrincipal)SerializationFormatterFactory.GetFormatter().Deserialize(request.Principal),
+          (ContextDictionary)SerializationFormatterFactory.GetFormatter().Deserialize(request.GlobalContext),
+          (ContextDictionary)SerializationFormatterFactory.GetFormatter().Deserialize(request.ClientContext),
           request.ClientCulture,
           request.ClientUICulture);
 
-#if NET40
-        var createResponse = processor.Create(createRequest);
-#else
         var createResponse = await processor.Create(createRequest).ConfigureAwait(false);
-#endif
         if (createResponse.Error != null)
         {
           result.ErrorData = new WcfErrorInfo(createResponse.Error);
         }
-        result.GlobalContext = MobileFormatter.Serialize(createResponse.GlobalContext);
-        result.ObjectData = MobileFormatter.Serialize(createResponse.Object);
+        result.GlobalContext = SerializationFormatterFactory.GetFormatter().Serialize(createResponse.GlobalContext);
+        result.ObjectData = SerializationFormatterFactory.GetFormatter().Serialize(createResponse.Object);
       }
       catch (Exception ex)
       {
@@ -91,11 +81,7 @@ namespace Csla.Server.Hosts.Mobile
     /// </summary>
     /// <param name="request">The request parameter object.</param>
     [OperationBehavior(Impersonation = ImpersonationOption.Allowed)]
-#if NET40
-    public WcfResponse Fetch(CriteriaRequest request)
-#else
     public async Task<WcfResponse> Fetch(CriteriaRequest request)
-#endif
     {
       var result = new WcfResponse();
       try
@@ -111,23 +97,19 @@ namespace Csla.Server.Hosts.Mobile
         var fetchRequest = new MobileCriteriaRequest(
           request.TypeName,
           criteria,
-          (IPrincipal)MobileFormatter.Deserialize(request.Principal),
-          (ContextDictionary)MobileFormatter.Deserialize(request.GlobalContext),
-          (ContextDictionary)MobileFormatter.Deserialize(request.ClientContext),
+          (IPrincipal)SerializationFormatterFactory.GetFormatter().Deserialize(request.Principal),
+          (ContextDictionary)SerializationFormatterFactory.GetFormatter().Deserialize(request.GlobalContext),
+          (ContextDictionary)SerializationFormatterFactory.GetFormatter().Deserialize(request.ClientContext),
           request.ClientCulture,
           request.ClientUICulture);
 
-#if NET40
-        var fetchResponse = processor.Fetch(fetchRequest);
-#else
         var fetchResponse = await processor.Fetch(fetchRequest).ConfigureAwait(false);
-#endif
         if (fetchResponse.Error != null)
         {
           result.ErrorData = new WcfErrorInfo(fetchResponse.Error);
         }
-        result.GlobalContext = MobileFormatter.Serialize(fetchResponse.GlobalContext);
-        result.ObjectData = MobileFormatter.Serialize(fetchResponse.Object);
+        result.GlobalContext = SerializationFormatterFactory.GetFormatter().Serialize(fetchResponse.GlobalContext);
+        result.ObjectData = SerializationFormatterFactory.GetFormatter().Serialize(fetchResponse.Object);
       }
       catch (Exception ex)
       {
@@ -145,11 +127,7 @@ namespace Csla.Server.Hosts.Mobile
     /// </summary>
     /// <param name="request">The request parameter object.</param>
     [OperationBehavior(Impersonation = ImpersonationOption.Allowed)]
-#if NET40
-    public WcfResponse Update(UpdateRequest request)
-#else
     public async Task<WcfResponse> Update(UpdateRequest request)
-#endif
     {
       var result = new WcfResponse();
       try
@@ -161,23 +139,19 @@ namespace Csla.Server.Hosts.Mobile
         var processor = new MobileRequestProcessor();
         var updateRequest = new MobileUpdateRequest(
           obj,
-          (IPrincipal)MobileFormatter.Deserialize(request.Principal),
-          (ContextDictionary)MobileFormatter.Deserialize(request.GlobalContext),
-          (ContextDictionary)MobileFormatter.Deserialize(request.ClientContext),
+          (IPrincipal)SerializationFormatterFactory.GetFormatter().Deserialize(request.Principal),
+          (ContextDictionary)SerializationFormatterFactory.GetFormatter().Deserialize(request.GlobalContext),
+          (ContextDictionary)SerializationFormatterFactory.GetFormatter().Deserialize(request.ClientContext),
           request.ClientCulture,
           request.ClientUICulture);
 
-#if NET40
-        var updateResponse = processor.Update(updateRequest);
-#else
         var updateResponse = await processor.Update(updateRequest).ConfigureAwait(false);
-#endif
         if (updateResponse.Error != null)
         {
           result.ErrorData = new WcfErrorInfo(updateResponse.Error);
         }
-        result.GlobalContext = MobileFormatter.Serialize(updateResponse.GlobalContext);
-        result.ObjectData = MobileFormatter.Serialize(updateResponse.Object);
+        result.GlobalContext = SerializationFormatterFactory.GetFormatter().Serialize(updateResponse.GlobalContext);
+        result.ObjectData = SerializationFormatterFactory.GetFormatter().Serialize(updateResponse.Object);
       }
       catch (Exception ex)
       {
@@ -195,11 +169,7 @@ namespace Csla.Server.Hosts.Mobile
     /// </summary>
     /// <param name="request">The request parameter object.</param>
     [OperationBehavior(Impersonation = ImpersonationOption.Allowed)]
-#if NET40
-    public WcfResponse Delete(CriteriaRequest request)
-#else
     public async Task<WcfResponse> Delete(CriteriaRequest request)
-#endif
     {
       var result = new WcfResponse();
       try
@@ -216,23 +186,19 @@ namespace Csla.Server.Hosts.Mobile
         var deleteRequest = new MobileCriteriaRequest(
           request.TypeName,
           criteria,
-          (IPrincipal)MobileFormatter.Deserialize(request.Principal),
-          (ContextDictionary)MobileFormatter.Deserialize(request.GlobalContext),
-          (ContextDictionary)MobileFormatter.Deserialize(request.ClientContext),
+          (IPrincipal)SerializationFormatterFactory.GetFormatter().Deserialize(request.Principal),
+          (ContextDictionary)SerializationFormatterFactory.GetFormatter().Deserialize(request.GlobalContext),
+          (ContextDictionary)SerializationFormatterFactory.GetFormatter().Deserialize(request.ClientContext),
           request.ClientCulture,
           request.ClientUICulture);
 
-#if NET40
-        var deleteResponse = processor.Delete(deleteRequest);
-#else
         var deleteResponse = await processor.Delete(deleteRequest).ConfigureAwait(false);
-#endif
         if (deleteResponse.Error != null)
         {
           result.ErrorData = new WcfErrorInfo(deleteResponse.Error);
         }
-        result.GlobalContext = MobileFormatter.Serialize(deleteResponse.GlobalContext);
-        result.ObjectData = MobileFormatter.Serialize(deleteResponse.Object);
+        result.GlobalContext = SerializationFormatterFactory.GetFormatter().Serialize(deleteResponse.GlobalContext);
+        result.ObjectData = SerializationFormatterFactory.GetFormatter().Serialize(deleteResponse.Object);
       }
       catch (Exception ex)
       {
@@ -245,21 +211,21 @@ namespace Csla.Server.Hosts.Mobile
       return ConvertResponse(result);
     }
 
-    #endregion
+#endregion
 
-    #region Criteria
+#region Criteria
 
     private static object GetCriteria(byte[] criteriaData)
     {
       object criteria = null;
       if (criteriaData != null)
-        criteria = MobileFormatter.Deserialize(criteriaData);
+        criteria = SerializationFormatterFactory.GetFormatter().Deserialize(criteriaData);
       return criteria;
     }
 
-    #endregion
+#endregion
 
-    #region Extention Method for Requests
+#region Extention Method for Requests
 
     /// <summary>
     /// Override to convert the request data before it
@@ -291,6 +257,7 @@ namespace Csla.Server.Hosts.Mobile
       return response;
     }
 
-    #endregion
+#endregion
   }
 }
+#endif

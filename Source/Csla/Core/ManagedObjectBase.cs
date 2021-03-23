@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="ManagedObjectBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Base class for an object that is serializable</summary>
 //-----------------------------------------------------------------------
@@ -16,13 +16,12 @@ using Csla.Core.LoadManager;
 using System.ComponentModel;
 using Csla.Reflection;
 using Csla.Serialization.Mobile;
-using Csla.Serialization;
 
 namespace Csla.Core
 {
   /// <summary>
   /// Base class for an object that is serializable
-  /// using MobileFormatter.
+  /// using SerializationFormatterFactory.GetFormatter().
   /// </summary>
   [Serializable]
   public abstract class ManagedObjectBase : MobileObject,
@@ -84,6 +83,22 @@ namespace Csla.Core
       PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
 
       return RegisterProperty(typeof(T), Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name));
+    }
+
+    /// <summary>
+    /// Indicates that the specified property belongs
+    /// to the business object type.
+    /// </summary>
+    /// <typeparam name="T">Type of Target</typeparam>
+    /// <typeparam name="P">Type of property</typeparam>
+    /// <param name="propertyLambdaExpression">Property Expression</param>
+    /// <param name="defaultValue">Default Value for the property</param>
+    /// <returns></returns>
+    protected static PropertyInfo<P> RegisterProperty<T, P>(Expression<Func<T, object>> propertyLambdaExpression, P defaultValue)
+    {
+      PropertyInfo reflectedPropertyInfo = Reflect<T>.GetProperty(propertyLambdaExpression);
+
+      return RegisterProperty(typeof(T), Csla.Core.FieldManager.PropertyInfoFactory.Factory.Create<P>(typeof(T), reflectedPropertyInfo.Name, reflectedPropertyInfo.Name, defaultValue));
     }
 
     /// <summary>
@@ -344,12 +359,7 @@ namespace Csla.Core
     protected virtual void LoadProperty(IPropertyInfo propertyInfo, object newValue)
     {
       var t = this.GetType();
-#if NET40 || SILVERLIGHT
-      var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-      var method = t.GetMethods(flags).FirstOrDefault(c => c.Name == "LoadProperty" && c.IsGenericMethod);
-#else
       var method = t.GetRuntimeMethods().FirstOrDefault(c => c.Name == "LoadProperty" && c.IsGenericMethod);
-#endif
       var gm = method.MakeGenericMethod(propertyInfo.Type);
       var p = new object[] { propertyInfo, newValue };
       gm.Invoke(this, p);
@@ -435,7 +445,7 @@ namespace Csla.Core
     /// object data from the serializations stream.
     /// </summary>
     /// <param name="info">Serialization info.</param>
-    /// <param name="formatter">Reference to the MobileFormatter.</param>
+    /// <param name="formatter">Reference to the SerializationFormatterFactory.GetFormatter().</param>
     protected override void OnGetChildren(SerializationInfo info, MobileFormatter formatter)
     {
       if (_fieldManager != null)
@@ -452,7 +462,7 @@ namespace Csla.Core
     /// objects into the serialization stream.
     /// </summary>
     /// <param name="info">Serialization info.</param>
-    /// <param name="formatter">Reference to the MobileFormatter.</param>
+    /// <param name="formatter">Reference to the SerializationFormatterFactory.GetFormatter().</param>
     protected override void OnSetChildren(SerializationInfo info, MobileFormatter formatter)
     {
       if (info.Children.ContainsKey("_fieldManager"))
@@ -468,9 +478,8 @@ namespace Csla.Core
 
     #region OnDeserialized
 
-#if !__ANDROID__ && !IOS
+
     [System.Runtime.Serialization.OnDeserialized()]
-#endif
     private void OnDeserializedHandler(System.Runtime.Serialization.StreamingContext context)
     {
       OnDeserialized(context);

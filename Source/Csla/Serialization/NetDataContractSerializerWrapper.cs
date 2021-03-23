@@ -1,11 +1,12 @@
+#if !NETSTANDARD2_0 && !NET5_0
 //-----------------------------------------------------------------------
 // <copyright file="NetDataContractSerializerWrapper.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Wraps the <see cref="NetDataContractSerializer"/></summary>
 //-----------------------------------------------------------------------
-using System;
+using System.IO;
 using System.Runtime.Serialization;
 
 namespace Csla.Serialization
@@ -17,10 +18,8 @@ namespace Csla.Serialization
   /// manner.
   public class NetDataContractSerializerWrapper : ISerializationFormatter
   {
-    private NetDataContractSerializer _formatter =
+    private readonly NetDataContractSerializer _formatter =
       new NetDataContractSerializer();
-
-    #region ISerializationFormatter Members
 
     /// <summary>
     /// Converts a serialization stream into an
@@ -35,6 +34,19 @@ namespace Csla.Serialization
     }
 
     /// <summary>
+    /// Converts a serialization stream into an
+    /// object graph.
+    /// </summary>
+    /// <param name="buffer">
+    /// Byte stream containing the serialized data.</param>
+    /// <returns>A deserialized object graph.</returns>
+    public object Deserialize(byte[] buffer)
+    {
+      using var serializationStream = new MemoryStream(buffer);
+      return _formatter.Deserialize(serializationStream);
+    }
+
+    /// <summary>
     /// Converts an object graph into a byte stream.
     /// </summary>
     /// <param name="serializationStream">
@@ -45,7 +57,17 @@ namespace Csla.Serialization
       _formatter.Serialize(serializationStream, graph);
     }
 
-    #endregion
+    /// <summary>
+    /// Converts an object graph into a byte stream.
+    /// </summary>
+    /// <param name="graph">Object graph to be serialized.</param>
+    public byte[] Serialize(object graph)
+    {
+      using var buffer = new MemoryStream();
+      _formatter.Serialize(buffer, graph);
+      buffer.Position = 0;
+      return buffer.ToArray();
+    }
 
     /// <summary>
     /// Gets a reference to the underlying
@@ -61,3 +83,4 @@ namespace Csla.Serialization
     }
   }
 }
+#endif

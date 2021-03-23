@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="ERitem.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -21,8 +21,8 @@ namespace Csla.Test.EditableRootList
       set { SetProperty(DataProperty, value); }
     }
 
-    private ERitem()
-    { /* require use of factory methods */ }
+    public ERitem()
+    { }
 
     private ERitem(string data)
     {

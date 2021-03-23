@@ -42,8 +42,7 @@ namespace Csla.Validation.Test
 
     private static PropertyInfo<SmartDate> EndedProperty =
       RegisterProperty(typeof (Project),
-                       new PropertyInfo<SmartDate>("Ended", "Ended",
-                                                   new SmartDate(SmartDate.EmptyValue.MaxDate)));
+                       new PropertyInfo<SmartDate>("Ended", new SmartDate(SmartDate.EmptyValue.MaxDate)));
 
     public string Ended
     {
@@ -132,17 +131,12 @@ namespace Csla.Validation.Test
 
     public static Project GetProject(Guid id)
     {
-      return DataPortal.Fetch<Project>(new SingleCriteria<Project, Guid>(id));
+      return DataPortal.Fetch<Project>(id);
     }
 
     public static void DeleteProject(Guid id)
     {
-      DataPortal.Delete<Project>(new SingleCriteria<Project, Guid>(id));
-    }
-
-    private Project()
-    {
-      /* require use of factory methods */
+      DataPortal.Delete<Project>(id);
     }
 
     #endregion
@@ -152,12 +146,12 @@ namespace Csla.Validation.Test
       
     }
 
-    protected void DataPortal_Fetch(object criteria)
+    protected void DataPortal_Fetch(Guid criteria)
     {
       
     }
 
-    protected void DataPortal_Delete(object criteria)
+    protected void DataPortal_Delete(Guid criteria)
     {
 
     }

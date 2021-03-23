@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="GlobalCOntextTests.server.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -26,11 +26,12 @@ namespace Csla.Test.Silverlight.ApplicationContext
   public partial class GlobalContextTests : TestBase
   {
     [TestMethod]
+    [TestCategory("SkipWhenLiveUnitTesting")]
     public void ServerShouldReceiveGlobalContextValue()
     {
       var context = GetContext();
 
-      Csla.ApplicationContext.User = new UnauthenticatedPrincipal();
+      Csla.ApplicationContext.User = new System.Security.Claims.ClaimsPrincipal();
 
       Csla.ApplicationContext.DataPortalProxy = "Csla.Testing.Business.TestProxies.AppDomainProxy, Csla.Testing.Business";
 
@@ -51,10 +52,11 @@ namespace Csla.Test.Silverlight.ApplicationContext
     }
 
     [TestMethod]
+    [TestCategory("SkipWhenLiveUnitTesting")]
     public void GlobalContextOnClientShouldBeAffectedByChangeOnServer()
     {
       var context = GetContext();
-      Csla.ApplicationContext.User = new UnauthenticatedPrincipal();
+      Csla.ApplicationContext.User = new System.Security.Claims.ClaimsPrincipal();
 
       Csla.ApplicationContext.DataPortalProxy = "Csla.Testing.Business.TestProxies.AppDomainProxy, Csla.Testing.Business";
 

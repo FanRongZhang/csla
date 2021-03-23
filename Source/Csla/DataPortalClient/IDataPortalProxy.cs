@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="IDataPortalProxy.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Interface implemented by client-side </summary>
 //-----------------------------------------------------------------------
@@ -20,6 +20,6 @@ namespace Csla.DataPortalClient
     /// a remote data portal server, or run the "server-side"
     /// data portal in the caller's process and AppDomain.
     /// </summary>
-    bool IsServerRemote { get;}
+    bool IsServerRemote { get; }
   }
 }

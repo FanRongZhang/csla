@@ -1,15 +1,11 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="EmptyCriteria.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Empty criteria used by the data portal as a</summary>
 //-----------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Csla.Serialization;
 
 namespace Csla.Server
 {
@@ -19,6 +15,13 @@ namespace Csla.Server
   /// has no criteria.
   /// </summary>
   [Serializable]
-  public class EmptyCriteria : Csla.Core.MobileObject
-  { }
+  public sealed class EmptyCriteria : Csla.Core.MobileObject
+  {
+    private EmptyCriteria() { }
+
+    /// <summary>
+    /// Gets an instance of EmptyCriteria
+    /// </summary>
+    public static EmptyCriteria Instance { get; } = new EmptyCriteria();
+  }
 }

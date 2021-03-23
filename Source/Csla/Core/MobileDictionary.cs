@@ -1,22 +1,22 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="MobileDictionary.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Defines a dictionary that can be serialized through</summary>
 //-----------------------------------------------------------------------
 using System.Collections.Generic;
 using System.Linq;
-using Csla.Serialization;
 using Csla.Serialization.Mobile;
 using System;
+using System.Reflection;
 using Csla.Reflection;
 
 namespace Csla.Core
 {
   /// <summary>
   /// Defines a dictionary that can be serialized through
-  /// the MobileFormatter.
+  /// the SerializationFormatterFactory.GetFormatter().
   /// </summary>
   /// <typeparam name="K">Key value: any primitive or IMobileObject type.</typeparam>
   /// <typeparam name="V">Value: any primitive or IMobileObject type.</typeparam>
@@ -72,7 +72,18 @@ namespace Csla.Core
       DetermineTypes();
     }
 
-#if !SILVERLIGHT && !NETFX_CORE
+    /// <summary>
+    /// Gets a value indicating whether the
+    /// dictionary contains the specified key
+    /// value.
+    /// </summary>
+    /// <param name="key">Key value</param>
+    public bool Contains(K key)
+    {
+      return base.ContainsKey(key);
+    }
+
+#if !(ANDROID || IOS) && !NETFX_CORE
     /// <summary>
     /// Creates an instance of the object for serialization.
     /// </summary>

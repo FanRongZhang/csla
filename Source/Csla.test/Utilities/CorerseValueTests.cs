@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="CorerseValueTests.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -9,7 +9,6 @@ using Csla;
 using Csla.DataPortalClient;
 using Csla.Testing.Business.ReadOnlyTest;
 using System;
-using Csla.Testing.Business.Security;
 using UnitDriven;
 
 #if NUNIT

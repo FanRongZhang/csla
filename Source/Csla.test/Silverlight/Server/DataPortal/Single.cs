@@ -1,21 +1,18 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="Single.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
 using System.Collections.Generic;
 using System.Text;
-#if SILVERLIGHT
-using Csla.Serialization;
-#else
-
-#endif
-
 using Csla;
 using System;
+using System.Threading.Tasks;
+
 using Csla.Core;
+using Csla.Server;
 
 namespace Csla.Test.DataPortalTest
 {
@@ -25,21 +22,20 @@ namespace Csla.Test.DataPortalTest
   [Serializable]
   public class Single : BusinessBase<Single>
   {
-    public readonly static PropertyInfo<int> IdProperty = RegisterProperty(new PropertyInfo<int>("Id", "Id"));
+    public readonly static PropertyInfo<int> IdProperty = RegisterProperty<int>(c => c.Id);
     public int Id
     {
       get { return GetProperty(IdProperty); }
       set { SetProperty(IdProperty, value); }
     }
 
-    public readonly static PropertyInfo<string> MethodCalledProperty = RegisterProperty(new PropertyInfo<string>("MethodCalled", "MethodCalled"));
+    public readonly static PropertyInfo<string> MethodCalledProperty = RegisterProperty<string>(c => c.MethodCalled, "MethodCalled");
     public string MethodCalled
     {
       get { return GetProperty(MethodCalledProperty); }
       set { SetProperty(MethodCalledProperty, value); }
     }
 
-#if !SILVERLIGHT
     public static Single NewObject()
     {
       return Csla.DataPortal.Create<Single>();
@@ -54,22 +50,9 @@ namespace Csla.Test.DataPortalTest
     {
       Csla.DataPortal.Delete<Single>(id);
     }
-#endif
-
-    public static void DeleteObject(int id, EventHandler<DataPortalResult<Single>> handler)
-    {
-      Csla.DataPortal.BeginDelete<Single>(id, handler);
-    }
-
-    public static void DeleteObject(int id, EventHandler<DataPortalResult<Single>> handler, object userState)
-    {
-      Csla.DataPortal.BeginDelete<Single>(id, handler, userState);
-    }
 
     public Single()
     { }
-
-#if !SILVERLIGHT
 
     protected override void DataPortal_Create()
     {
@@ -83,8 +66,10 @@ namespace Csla.Test.DataPortalTest
     private void DoCreate(int id)
     {
       Id = id;
+#pragma warning disable CS0618 // Type or member is obsolete
       ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("Single", "Created");
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = "Created";
       if (id == 9999)
         throw new Exception("Bad data");
@@ -103,8 +88,10 @@ namespace Csla.Test.DataPortalTest
     private void DoFetch(int id)
     {
       Id = id;
+#pragma warning disable CS0618 // Type or member is obsolete
       ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("Single", "Fetched");
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = "Fetched";
       if (id == 9999)
         throw new Exception("Bad data");
@@ -124,25 +111,49 @@ namespace Csla.Test.DataPortalTest
     {
       var insertOrUpdate = isUpdate ? "Updated" : "Inserted";
 
+#pragma warning disable CS0618 // Type or member is obsolete
       ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("Single", insertOrUpdate);
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = insertOrUpdate;
     }
 
     protected override void DataPortal_DeleteSelf()
     {
+#pragma warning disable CS0618 // Type or member is obsolete
       Csla.ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("Single", "SelfDeleted");
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = "SelfDeleted";
     }
 
     private void DataPortal_Delete(int id)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
       Csla.ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("Single", "Deleted");
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = "Deleted";
     }
-#endif
+  }
+
+  [Serializable]
+  [ObjectFactory(typeof(SingleWithFactoryFactory))]
+  public class SingleWithFactory : BusinessBase<SingleWithFactory>
+  {
+  }
+
+  public class SingleWithFactoryFactory : ObjectFactory
+  {
+    public async Task<object> Fetch()
+    {
+      return await Task.Run(() => new SingleWithFactory());
+    }
+
+    public async Task<object> Create()
+    {
+      return await Task.Run(() => new SingleWithFactory());
+    }
   }
 
   [Serializable]
@@ -155,7 +166,6 @@ namespace Csla.Test.DataPortalTest
       set { SetProperty(IdProperty, value); }
     }
 
-#if !SILVERLIGHT
     private void DataPortal_Create(int id)
     {
       if (id == 9999)
@@ -201,7 +211,6 @@ namespace Csla.Test.DataPortalTest
         throw new Exception("bad value");
       Id = id;
     }
-#endif
   }
 
   [Serializable]
@@ -214,13 +223,11 @@ namespace Csla.Test.DataPortalTest
       set { LoadProperty(ValueProperty, value); }
     }
 
-#if !SILVERLIGHT
     protected override void DataPortal_Execute()
     {
       if (Value == 555)
         throw new Exception("bad value");
       Value += 1;
     }
-#endif
   }
 }

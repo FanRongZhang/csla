@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="IContextManager.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Defines the interface for an application </summary>
 //-----------------------------------------------------------------------
@@ -58,5 +58,27 @@ namespace Csla.Core
     /// </summary>
     /// <param name="globalContext">Global context.</param>
     void SetGlobalContext(ContextDictionary globalContext);
+    /// <summary>
+    /// Gets the default IServiceProvider
+    /// </summary>
+    IServiceProvider GetDefaultServiceProvider();
+    /// <summary>
+    /// Sets the default IServiceProvider
+    /// </summary>
+    /// <param name="serviceProvider">IServiceProvider instance</param>
+    void SetDefaultServiceProvider(IServiceProvider serviceProvider);
+    /// <summary>
+    /// Gets the service provider scope for current scope.
+    /// </summary>
+#pragma warning disable CS3002 // Return type is not CLS-compliant
+    IServiceProvider GetServiceProvider();
+#pragma warning restore CS3002 // Return type is not CLS-compliant
+    /// <summary>
+    /// Sets the service provider for current scope.
+    /// </summary>
+    /// <param name="scope">IServiceProvider instance</param>
+#pragma warning disable CS3001 // Argument type is not CLS-compliant
+    void SetServiceProvider(IServiceProvider scope);
+#pragma warning restore CS3001 // Argument type is not CLS-compliant
   }
 }

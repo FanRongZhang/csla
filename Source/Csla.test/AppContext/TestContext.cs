@@ -6,6 +6,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using Csla.Core;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Csla.Test.AppContext
 {
@@ -25,8 +26,13 @@ namespace Csla.Test.AppContext
 
     public IPrincipal GetUser()
     {
-      IPrincipal current = Thread.CurrentPrincipal;
-      return current;
+      IPrincipal result = Thread.CurrentPrincipal;
+      if (result == null)
+      {
+        result = new System.Security.Claims.ClaimsPrincipal();
+        SetUser(result);
+      }
+      return result;
     }
 
     public void SetUser(IPrincipal principal)
@@ -68,6 +74,43 @@ namespace Csla.Test.AppContext
     public void SetGlobalContext(ContextDictionary globalContext)
     {
       _myContext[_globalContextName] = globalContext;
+    }
+
+    private static IServiceProvider _provider;
+
+    /// <summary>
+    /// Gets the default IServiceProvider
+    /// </summary>
+    public IServiceProvider GetDefaultServiceProvider()
+    {
+      return _provider;
+    }
+
+    /// <summary>
+    /// Sets the default IServiceProvider
+    /// </summary>
+    /// <param name="serviceProvider">IServiceProvider instance</param>
+    public void SetDefaultServiceProvider(IServiceProvider serviceProvider)
+    {
+      _provider = serviceProvider;
+    }
+
+    /// <summary>
+    /// Gets the service provider for current scope
+    /// </summary>
+    /// <returns></returns>
+    public IServiceProvider GetServiceProvider()
+    {
+      return (IServiceProvider)ApplicationContext.LocalContext["__sps"];
+    }
+
+    /// <summary>
+    /// Sets the service provider for current scope
+    /// </summary>
+    /// <param name="scope">IServiceProvider instance</param>
+    public void SetServiceProvider(IServiceProvider scope)
+    {
+      Csla.ApplicationContext.LocalContext["__sps"] = scope;
     }
   }
 }

@@ -1,21 +1,18 @@
 //-----------------------------------------------------------------------
 // <copyright file="DataPortalException.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This exception is returned for any errors occuring</summary>
 //-----------------------------------------------------------------------
 using System;
-#if !NETFX_CORE
 using System.Security.Permissions;
-#endif
-using Csla.Serialization;
 
 namespace Csla
 {
 
   /// <summary>
-  /// This exception is returned for any errors occuring
+  /// This exception is returned for any errors occurring
   /// during the server-side DataPortal invocation.
   /// </summary>
   [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1032:ImplementStandardExceptionConstructors")]
@@ -64,6 +61,7 @@ namespace Csla
       _innerStackTrace = ex.StackTrace;
     }
 
+#if !NETSTANDARD2_0 && !NET5_0
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
@@ -73,6 +71,7 @@ namespace Csla
     {
       this.ErrorInfo = new Csla.Server.Hosts.HttpChannel.HttpErrorInfo(info);
     }
+#endif
 
     /// <summary>
     /// Creates an instance of the object.
@@ -117,6 +116,21 @@ namespace Csla
     /// </summary>
     public Csla.Server.Hosts.HttpChannel.HttpErrorInfo ErrorInfo { get; private set; }
 
+    /// <summary>
+    /// Gets the original exception error info
+    /// that caused this exception.
+    /// </summary>
+    public Server.Hosts.HttpChannel.HttpErrorInfo BusinessErrorInfo
+    {
+      get
+      {
+        var result = ErrorInfo;
+        while (result.InnerError != null)
+          result = result.InnerError;
+        return result;
+      }
+    }
+
     private object _businessObject;
     private string _innerStackTrace;
 
@@ -137,24 +151,47 @@ namespace Csla
       get { return _businessObject; }
     }
 
+    private Exception _businessException;
+
     /// <summary>
     /// Gets the original server-side exception.
     /// </summary>
     /// <returns>An exception object.</returns>
     /// <remarks>
-    /// When an exception occurs in business code behind
-    /// the data portal, it is wrapped in a 
-    /// <see cref="Csla.Server.DataPortalException"/>, which 
-    /// is then wrapped in a 
-    /// <see cref="Csla.DataPortalException"/>. This property
-    /// unwraps and returns the original exception 
-    /// thrown by the business code on the server.
+    /// Removes all DataPortalException and CallMethodException
+    /// instances in the exception stack to find the original
+    /// exception.
     /// </remarks>
     public Exception BusinessException
     {
       get
       {
-        return this.InnerException.InnerException;
+        if (_businessException == null)
+        {
+          _businessException = this.InnerException;
+          while (_businessException is Csla.Reflection.CallMethodException || _businessException is DataPortalException)
+            _businessException = _businessException.InnerException;
+        }
+        return _businessException;
+      }
+    }
+
+    /// <summary>
+    /// Gets the Message property from the
+    /// BusinessException, falling back to
+    /// the Message value from the top-level
+    /// exception.
+    /// </summary>
+    public string BusinessExceptionMessage
+    {
+      get
+      {
+        if (ErrorInfo != null)
+          return BusinessErrorInfo.Message;
+        else if (BusinessException == null)
+          return Message;
+        else
+          return BusinessException.Message;
       }
     }
 
@@ -168,11 +205,10 @@ namespace Csla
       get { return String.Format("{0}{1}{2}", _innerStackTrace, Environment.NewLine, base.StackTrace); }
     }
 
-#if !SILVERLIGHT && !NETFX_CORE
     /// <summary>
     /// Creates an instance of the object for serialization.
     /// </summary>
-    /// <param name="info">Serialiation info object.</param>
+    /// <param name="info">Serialization info object.</param>
     /// <param name="context">Serialization context object.</param>
     protected DataPortalException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
       : base(info, context)
@@ -184,17 +220,18 @@ namespace Csla
     /// <summary>
     /// Serializes the object.
     /// </summary>
-    /// <param name="info">Serialiation info object.</param>
+    /// <param name="info">Serialization info object.</param>
     /// <param name="context">Serialization context object.</param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:ValidateArgumentsOfPublicMethods")]
+#if !NET5_0
     [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
     [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.SerializationFormatter)]
+#endif
     public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
     {
       base.GetObjectData(info, context);
       info.AddValue("_businessObject", _businessObject);
       info.AddValue("_innerStackTrace", _innerStackTrace);
     }
-#endif
   }
 }

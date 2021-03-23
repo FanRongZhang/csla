@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="12.0">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Csla.Test</RootNamespace>
     <AssemblyName>Csla.Test</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -49,7 +49,16 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.5.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.Extensions.DependencyInjection, Version=3.1.9.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.3.1.9\lib\net461\Microsoft.Extensions.DependencyInjection.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions, Version=3.1.9.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Extensions.DependencyInjection.Abstractions.3.1.9\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="PresentationCore" />
@@ -75,10 +84,16 @@
     <Reference Include="System.Data.Services.Client" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.EnterpriseServices" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.5.0.0\lib\net45\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
     <Reference Include="System.Runtime.Remoting" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
     <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
     <Reference Include="System.Transactions" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -102,7 +117,9 @@
     <Compile Include="AppContext\SimpleRoot.cs" />
     <Compile Include="AppContext\TestContext.cs" />
     <Compile Include="AppDomainTests\AppDomainTests.cs" />
+    <Compile Include="Authorization\AuthRuleExpectsCriteria.cs" />
     <Compile Include="Authorization\AuthTests.cs" />
+    <Compile Include="Authorization\PermissionRootWithCriteria.cs" />
     <Compile Include="Authorization\PermissionsRoot.cs" />
     <Compile Include="Authorization\PermissionsRoot2.cs" />
     <Compile Include="Authorization\PerTypeAuthClasses.cs" />
@@ -110,8 +127,6 @@
     <Compile Include="Authorization\ReadonlyAuthorizationTests.cs" />
     <Compile Include="Authorization\ReadOnlyPerson.cs" />
     <Compile Include="Authorization\RootException.cs" />
-    <Compile Include="Authorization\TestIdentity.cs" />
-    <Compile Include="Authorization\TestPrincipal.cs" />
     <Compile Include="BasicModern\BasicModernTests.cs" />
     <Compile Include="BasicModern\Child.cs" />
     <Compile Include="BasicModern\ChildList.cs" />
@@ -142,6 +157,7 @@
     <Compile Include="ChildChanged\ContainsList.cs" />
     <Compile Include="ChildChanged\GrandChild.cs" />
     <Compile Include="ChildChanged\ListContainerList.cs" />
+    <Compile Include="ChildChanged\OptimizeChildChangedTests.cs" />
     <Compile Include="ChildChanged\SingleChild.cs" />
     <Compile Include="ChildChanged\SingleList.cs" />
     <Compile Include="ChildChanged\SingleRoot.cs" />
@@ -158,15 +174,23 @@
     <Compile Include="DataPortalChild\ChildList.cs" />
     <Compile Include="DataPortalChild\DataPortalChildTests.cs" />
     <Compile Include="DataPortalChild\Root.cs" />
+    <Compile Include="DataPortal\ArrayTests.cs" />
     <Compile Include="DataPortal\AsynchDataPortalTest.cs" />
     <Compile Include="DataPortal\ChildEntity.cs" />
     <Compile Include="DataPortal\ChildEntityList.cs" />
+    <Compile Include="DataPortal\CustomDataPortalServer.cs" />
+    <Compile Include="DataPortal\DataPortalExceptionTest.cs" />
+    <Compile Include="DataPortal\DisposeScopeTest.cs" />
     <Compile Include="DataPortal\InterceptorTests.cs" />
     <Compile Include="DataPortal\Legacy.cs" />
     <Compile Include="DataPortal\LegacySplit.cs" />
     <Compile Include="DataPortal\LegacySplitBase.cs" />
     <Compile Include="DataPortal\LegacySplitTest.cs" />
     <Compile Include="DataPortal\LegacyTest.cs" />
+    <Compile Include="DataPortal\LogicalExecutionDataPortalTests.cs" />
+    <Compile Include="DataPortal\MultipleDataAccess.cs" />
+    <Compile Include="DataPortal\MultipleDataAccessBase.cs" />
+    <Compile Include="DataPortal\MultipleDataAccessTest.cs" />
     <Compile Include="DataPortal\ParentEntity.cs" />
     <Compile Include="DataPortal\ESTransactionalRoot.cs" />
     <Compile Include="DataPortal\SingleOverload.cs" />
@@ -182,7 +206,6 @@
     <Compile Include="DataPortal\TransactionalRoot.cs" />
     <Compile Include="DataPortalTestDatabaseDataSet.cs">
       <DependentUpon>DataPortalTestDatabaseDataSet.xsd</DependentUpon>
-      <SubType>Component</SubType>
     </Compile>
     <Compile Include="DataPortalTestDatabaseDataSet.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -208,6 +231,14 @@
     <Compile Include="EditableRootList\EditableRootListTests.cs" />
     <Compile Include="EditableRootList\ERitem.cs" />
     <Compile Include="EditableRootList\ERlist.cs" />
+    <Compile Include="FieldManager\Child.cs" />
+    <Compile Include="FieldManager\ChildList.cs" />
+    <Compile Include="FieldManager\ChildUpdateTests.cs" />
+    <Compile Include="FieldManager\Root.cs" />
+    <Compile Include="FieldManager\RootUpdateAllChildren.cs" />
+    <Compile Include="GraphMerge\GraphMergerTests.cs" />
+    <Compile Include="GraphMerge\IdentityTests.cs" />
+    <Compile Include="GraphMerge\TestClasses.cs" />
     <Compile Include="LazySingelton\LazySingeltonTest.cs" />
     <Compile Include="Linq\LinqObservableCollectionTest.cs" />
     <Compile Include="LogicalExecutionLocation\LocationBusinessBase.cs" />
@@ -252,12 +283,16 @@
     <Compile Include="PropertyGetSet\PropertyGetSetTests.cs" />
     <Compile Include="PropertyInfo\PropertyInfoRoot.cs" />
     <Compile Include="PropertyInfo\PropertyInfoTests.cs" />
+    <Compile Include="Reflection\GetConstructor.cs" />
     <Compile Include="RollBack\RollbackRoot.cs" />
     <Compile Include="RollBack\RollBackTests.cs" />
     <Compile Include="SafeDataReader\SafeDataReaderTests.cs" />
     <Compile Include="Serialization\BinaryReaderWriterTestClass.cs" />
+    <Compile Include="Serialization\CslaClaimsPrincipalSerializationTests.cs" />
     <Compile Include="Serialization\DCRoot.cs" />
     <Compile Include="Serialization\nonSerializableEventHandler.cs" />
+    <Compile Include="Serialization\NonSerializedClass.cs" />
+    <Compile Include="Serialization\OverrideSerializationRoot.cs" />
     <Compile Include="Serialization\SerializationRoot.cs" />
     <Compile Include="Serialization\SerializationTests.cs" />
     <Compile Include="Serialization\TestEventSink.cs" />
@@ -268,7 +303,6 @@
     <Compile Include="Silverlight\CommandBase\CommandBaseTests.cs" />
     <Compile Include="DataPortal\AuthorizeDataPortalTests.cs" />
     <Compile Include="Silverlight\DataPortal\AuthorizeDataPortalTests.cs" />
-    <Compile Include="Silverlight\DataPortal\ClientCultureDataPortalTests.cs" />
     <Compile Include="Silverlight\NameValueList\NameValueListTests.cs" />
     <Compile Include="Silverlight\PropertyGetSet\AbstractGetSet.cs" />
     <Compile Include="Silverlight\PropertyGetSet\InheritedLoadPropertySet.cs" />
@@ -277,9 +311,6 @@
     <Compile Include="Silverlight\ReadOnly\MockReadOnlyList.cs" />
     <Compile Include="Silverlight\ReadOnly\ReadOnlyTests.cs" />
     <Compile Include="Silverlight\Rollback\RollbackRoot.cs" />
-    <Compile Include="Silverlight\Rollback\RollbackTests.cs" />
-    <Compile Include="Silverlight\Security\SecurityTests.server.cs" />
-    <Compile Include="Silverlight\Security\SecurityTests.cs" />
     <Compile Include="Silverlight\Serialization\Address.cs" />
     <Compile Include="Silverlight\Serialization\AddressBase.cs" />
     <Compile Include="Silverlight\Serialization\AddressList.cs" />
@@ -305,12 +336,10 @@
     <Compile Include="Silverlight\Stereotypes\TestCriteria.cs" />
     <Compile Include="SmartDate\SmartDateTests.cs" />
     <Compile Include="SortedBindingList\SortedBindingListTests.cs" />
+    <Compile Include="SourceLink\PdbContentTests.cs" />
     <Compile Include="Threading\BackgroundWorkerSyncContextHelper.cs" />
     <Compile Include="Threading\BackgroundWorkerTests.cs" />
     <Compile Include="Threading\BusyLockTests.cs" />
-    <Compile Include="Threading\CslaTaskSchedulerTests.cs" />
-    <Compile Include="Threading\MyIdentity.cs" />
-    <Compile Include="Threading\MyPrincipal.cs" />
     <Compile Include="Utilities\CorerseValueTests.cs" />
     <Compile Include="Utilities\UtilitiesTestHelper.cs" />
     <Compile Include="ValidationRules\AsyncRuleRoot.cs" />
@@ -345,6 +374,7 @@
     <Compile Include="ValidationRules\ValidationTests.cs" />
     <Compile Include="ViewModelTests\TestViewModel.cs" />
     <Compile Include="ViewModelTests\ViewModelTests.cs" />
+    <Compile Include="WellKnownValues.cs" />
     <Compile Include="Windows\ActionExtenderTests.cs" />
     <Compile Include="Windows\BindingRefreshTests.cs" />
     <Compile Include="Windows\EditablePerson.cs" />
@@ -357,6 +387,11 @@
     <Compile Include="Windows\ReadWriteAuthorizationTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\config\testConnectionStrings.config">
+      <Link>testConnectionStrings.config</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <SubType>Designer</SubType>
+    </None>
     <None Include="app.config" />
     <None Include="DataPortalTestDatabaseDataSet.xsc">
       <DependentUpon>DataPortalTestDatabaseDataSet.xsd</DependentUpon>
@@ -374,6 +409,7 @@
       <LastGenOutput>TestLinqToSqlContext.designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
     </None>
+    <None Include="packages.config" />
     <None Include="Properties\DataSources\Csla.Test.Data.DataPortalTestDatabaseEntities.datasource" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -444,21 +480,17 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\csla\csla.csproj">
-      <Project>{9DA591ED-C570-47AC-8E5D-35B039E07973}</Project>
+    <ProjectReference Include="..\Csla\Csla.csproj">
+      <Project>{9da591ed-c570-47ac-8e5d-35b039e07973}</Project>
       <Name>Csla</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Csla.Web\Csla.Web.csproj">
-      <Project>{492B788E-888E-4041-B356-F5947B50D360}</Project>
-      <Name>Csla.Web</Name>
+    <ProjectReference Include="..\Csla.Windows.Net4.6\Csla.Windows.Net4.6.csproj">
+      <Project>{e6982b4d-d9be-4f70-ae2f-bb84763d317d}</Project>
+      <Name>Csla.Windows.Net4.6</Name>
     </ProjectReference>
-    <ProjectReference Include="..\csla.windows\Csla.Windows.csproj">
-      <Project>{C333CFED-D5A6-47A2-96A6-F13EE2B71ECF}</Project>
-      <Name>Csla.Windows</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\csla.xaml\Csla.Xaml.csproj">
-      <Project>{563EFDFA-EB47-4039-955B-654582EA5362}</Project>
-      <Name>Csla.Xaml</Name>
+    <ProjectReference Include="..\Csla.Xaml.Net4.6\Csla.Xaml.Net4.6.csproj">
+      <Project>{86d57709-004d-4195-a671-edc37eb57ed6}</Project>
+      <Name>Csla.Xaml.Net4.6</Name>
     </ProjectReference>
     <ProjectReference Include="Silverlight\Server\csla.silverlight.server.test.csproj">
       <Project>{3374389D-59D8-44B1-B6D0-015819DB482C}</Project>

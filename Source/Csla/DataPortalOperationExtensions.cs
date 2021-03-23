@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="DataPortalOperationExtensions.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Object containing information about the</summary>
 //-----------------------------------------------------------------------
@@ -26,7 +26,7 @@ namespace Csla
         case DataPortalOperations.Update:
           return AuthorizationActions.EditObject;
         case DataPortalOperations.Delete:
-          return AuthorizationActions.CreateObject;
+          return AuthorizationActions.DeleteObject;
         case DataPortalOperations.Execute:
           // CSLA handles Execute/CommandObject as Update operations 
           // - this is the permission that the client DataPortal checks.

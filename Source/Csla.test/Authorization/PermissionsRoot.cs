@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="PermissionsRoot.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -84,31 +84,12 @@ namespace Csla.Test.Security
 
     #endregion
 
-    #region "Constructors"
-#if SILVERLIGHT
-    public PermissionsRoot() { }
-#else
-
-    private PermissionsRoot()
-    {
-      //require use of factory methods
-    }
-#endif
-    #endregion
-
     #region "factory methods"
 
-#if SILVERLIGHT
-    public static PermissionsRoot NewPermissionsRoot()
-    {
-      return new PermissionsRoot();
-    }
-#else
     public static PermissionsRoot NewPermissionsRoot()
     {
       return Csla.DataPortal.Create<PermissionsRoot>();
     }
-#endif
     #endregion
 
     #region "Criteria"
@@ -121,14 +102,10 @@ namespace Csla.Test.Security
 
     #endregion
 
-#if !SILVERLIGHT
-
     [RunLocal()]
     protected override void DataPortal_Create()
     {
       _firstName = "default value"; //for now...
     }
-
-#endif
   }
 }

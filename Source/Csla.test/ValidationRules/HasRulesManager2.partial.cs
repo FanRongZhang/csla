@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="HasRulesManager2.partial.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -14,11 +14,6 @@ namespace Csla.Test.ValidationRules
 {
   public partial class HasRulesManager2
   {
-    private HasRulesManager2()
-    {
-      //prevent direct creation
-    }
-
     private void DataPortal_Create(object criteria)
     {
       Criteria crit = (Criteria)(criteria);

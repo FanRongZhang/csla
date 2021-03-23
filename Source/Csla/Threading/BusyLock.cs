@@ -1,16 +1,12 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="BusyLock.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Implementation of a lock that waits while</summary>
 //-----------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Csla.Core;
-using System.ComponentModel;
 using System.Threading;
 
 namespace Csla.Threading
@@ -20,7 +16,7 @@ namespace Csla.Threading
   /// a target object is busy.
   /// </summary>
   /// <remarks>
-  /// Do not call this from a Silverlight UI thread, as it will block
+  /// Do not call this from a Blazor UI thread, as it will block
   /// the entire browser.
   /// </remarks>
   public static class BusyLock
@@ -84,7 +80,7 @@ namespace Csla.Threading
         // otherwise wait for the event to be signaled.
         if (_target.IsBusy)
         {
-#if SILVERLIGHT
+#if (ANDROID || IOS)
           _event.WaitOne(_timeout);
 #else
           _event.WaitOne(_timeout, false);

@@ -1,7 +1,8 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETFX_CORE
+//-----------------------------------------------------------------------
 // <copyright file="SmartDateConverter.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Converts values to and from a SmartDate.</summary>
 //-----------------------------------------------------------------------
@@ -106,3 +107,4 @@ namespace Csla.Core.TypeConverters
     }
   }
 }
+#endif

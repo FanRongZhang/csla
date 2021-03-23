@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="TransactionalRoot.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -20,7 +20,7 @@ namespace Csla.Test.DataPortal
         #region "Business methods"
 
         //get the configurationmanager to work right
-        public static string CONNECTION_STRING = ConfigurationManager.ConnectionStrings["Csla.Test.Properties.Settings.DataPortalTestDatabaseConnectionString"].ConnectionString;
+        //public static string CONNECTION_STRING = WellKnownValues.ConnectionStrings.DataPortalTestDatabase;
 
         public static PropertyInfo<int> IDProperty = RegisterProperty<int>(c => c.ID);
         public int ID
@@ -58,15 +58,6 @@ namespace Csla.Test.DataPortal
             //but to easily test the transactional functionality of the server-side dataportal
             //we are going to allow strings that are longer than what the database allows
         }
-
-        #region "constructors"
-
-        private TransactionalRoot()
-        { 
-            //require factory method 
-        }
-
-        #endregion
 
         #region "Factory Methods"
 
@@ -131,7 +122,7 @@ namespace Csla.Test.DataPortal
         [Transactional(TransactionalTypes.TransactionScope)]
         protected override void DataPortal_Insert()
         {
-            SqlConnection cn = new SqlConnection(CONNECTION_STRING);
+            SqlConnection cn = new SqlConnection(WellKnownValues.DataPortalTestDatabase);
             string firstName = this.FirstName;
             string lastName = this.LastName;
             string smallColumn = this.SmallColumn;

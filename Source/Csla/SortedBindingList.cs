@@ -1,7 +1,8 @@
+#if !NETFX_CORE
 //-----------------------------------------------------------------------
 // <copyright file="SortedBindingList.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Provides a sorted view into an existing IList(Of T).</summary>
 //-----------------------------------------------------------------------
@@ -468,7 +469,7 @@ namespace Csla
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> since this object does raise the
+    /// Returns true since this object does raise the
     /// ListChanged event.
     /// </summary>
     public bool SupportsChangeNotification
@@ -491,7 +492,7 @@ namespace Csla
     }
 
     /// <summary>
-    /// Returns <see langword="true"/>. Sorting is supported.
+    /// Returns true. Sorting is supported.
     /// </summary>
     public bool SupportsSorting
     {
@@ -917,3 +918,4 @@ namespace Csla
 
   }
 }
+#endif

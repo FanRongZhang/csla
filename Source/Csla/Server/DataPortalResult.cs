@@ -1,14 +1,13 @@
 //-----------------------------------------------------------------------
 // <copyright file="DataPortalResult.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Returns data from the server-side DataPortal to the </summary>
 //-----------------------------------------------------------------------
 using System;
 using System.Collections.Specialized;
 using Csla.Core;
-using Csla.Serialization;
 
 namespace Csla.Server
 {

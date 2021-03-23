@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="CommandObject.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -20,8 +20,6 @@ namespace Csla.Test.ObjectFactory
 
     public static bool CanExecuteCommand()
     {
-      // TODO: customize to check user role
-      //return Csla.ApplicationContext.User.IsInRole("Role");
       return true;
     }
 
@@ -41,9 +39,6 @@ namespace Csla.Test.ObjectFactory
       return cmd.Result;
     }
 
-    private CommandObject()
-    { /* require use of factory methods */ }
-
     #endregion
 
     #region Client-side Code
@@ -57,14 +52,10 @@ namespace Csla.Test.ObjectFactory
 
     private void BeforeServer()
     {
-      // TODO: implement code to run on client
-      // before server is called
     }
 
     private void AfterServer()
     {
-      // TODO: implement code to run on client
-      // after server is called
     }
 
     #endregion

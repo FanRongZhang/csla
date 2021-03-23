@@ -1,7 +1,7 @@
 ﻿﻿//-----------------------------------------------------------------------
 // <copyright file="BusinessRulesExtensions.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Extension methods to simplify lambda business rules</summary>
 //-----------------------------------------------------------------------
@@ -39,10 +39,8 @@ namespace Csla.Rules
           }
         }
       });
-      #if !NETFX_CORE   // must set unique name 
-        var methodName = ruleHandler.Method.ToString();
-        rule.AddQueryParameter("s", Convert.ToBase64String(Encoding.Unicode.GetBytes(methodName)));
-      #endif
+      var methodName = ruleHandler.Method.ToString();
+      rule.AddQueryParameter("s", Convert.ToBase64String(Encoding.Unicode.GetBytes(methodName)));
      
       businessRules.AddRule(rule);
     }
@@ -84,10 +82,8 @@ namespace Csla.Rules
           }
         }
       });
-#if !NETFX_CORE   // must set unique name
       var methodName = ruleHandler.Method.ToString();
       rule.AddQueryParameter("s", Convert.ToBase64String(Encoding.Unicode.GetBytes(methodName)));
-#endif
       businessRules.AddRule(rule, ruleSet);
     }
 
@@ -158,10 +154,8 @@ namespace Csla.Rules
           }
         }
       });
-#if !NETFX_CORE   // must set unique name
       var methodName = ruleHandler.Method.ToString();
       rule.AddQueryParameter("s", Convert.ToBase64String(Encoding.Unicode.GetBytes(methodName)));
-#endif
       businessRules.AddRule(rule, ruleSet);
     }
 

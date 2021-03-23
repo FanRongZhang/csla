@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="FilterProvider.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Defines the method signature for a filter</summary>
 //-----------------------------------------------------------------------
@@ -15,6 +15,6 @@ namespace Csla
   /// </summary>
   /// <param name="item">The object to be filtered.</param>
   /// <param name="filter">The filter criteria.</param>
-  /// <returns><see langword="true"/> if the item matches the filter.</returns>
+  /// <returns>true if the item matches the filter.</returns>
   public delegate bool FilterProvider(object item, object filter);
 }

@@ -1,14 +1,17 @@
 //-----------------------------------------------------------------------
 // <copyright file="ExtendedBindingList.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Extends BindingList of T by adding extra</summary>
 //-----------------------------------------------------------------------
 using System;
 using System.ComponentModel;
 using Csla.Serialization.Mobile;
-using System.Runtime.Serialization;
+#if NETFX_CORE || (ANDROID || IOS)
+using System.Collections.Generic;
+using System.Collections.Specialized;
+#endif
 
 namespace Csla.Core
 {
@@ -20,13 +23,11 @@ namespace Csla.Core
   [Serializable]
   public class ExtendedBindingList<T> : MobileBindingList<T>,
     IExtendedBindingList, 
-    IMobileObject,
+    IMobileList,
     INotifyBusy,
     INotifyChildChanged,
     ISerializationNotification
   {
-    #region RemovingItem event
-
     [NonSerialized()]
     private EventHandler<RemovingItemEventArgs> _nonSerializableHandlers;
     private EventHandler<RemovingItemEventArgs> _serializableHandlers;
@@ -78,10 +79,6 @@ namespace Csla.Core
           new RemovingItemEventArgs(removedItem));
     }
 
-    #endregion
-
-    #region RemoveItem
-
     /// <summary>
     /// Remove the item at the
     /// specified index.
@@ -97,10 +94,6 @@ namespace Csla.Core
       base.RemoveItem(index);
     }
 
-    #endregion
-
-    #region AddRange
-
     /// <summary>
     /// Add a range of items to the list.
     /// </summary>
@@ -110,10 +103,6 @@ namespace Csla.Core
       foreach (var element in range)
         this.Add(element);
     }
-
-    #endregion
-
-    #region INotifyPropertyBusy Members
 
     [NotUndoable]
     [NonSerialized]
@@ -155,6 +144,7 @@ namespace Csla.Core
     /// </summary>
     [Browsable(false)]
     [System.ComponentModel.DataAnnotations.Display(AutoGenerateField = false)]
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
     public virtual bool IsBusy
     {
       get { throw new NotImplementedException(); }
@@ -165,6 +155,7 @@ namespace Csla.Core
     /// </summary>
     [Browsable(false)]
     [System.ComponentModel.DataAnnotations.Display(AutoGenerateField = false)]
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
     public virtual bool IsSelfBusy
     {
       get { return IsBusy; }
@@ -174,10 +165,6 @@ namespace Csla.Core
     {
       OnBusyChanged(e);
     }
-
-    #endregion
-
-    #region INotifyUnhandledAsyncException Members
 
     [NotUndoable]
     [NonSerialized]
@@ -219,10 +206,6 @@ namespace Csla.Core
       OnUnhandledAsyncException(e);
     }
 
-    #endregion
-
-    #region AddChildHooks
-
     /// <summary>
     /// Invoked when an item is inserted into the list.
     /// </summary>
@@ -254,10 +237,6 @@ namespace Csla.Core
       if (c != null)
         c.PropertyChanged += Child_PropertyChanged;
 
-      //IBindingList list = item as IBindingList;
-      //if (list != null)
-      //  list.ListChanged += new ListChangedEventHandler(Child_ListChanged);
-
       INotifyChildChanged child = item as INotifyChildChanged;
       if (child != null)
         child.ChildChanged += Child_Changed;
@@ -283,18 +262,10 @@ namespace Csla.Core
       if (c != null)
         c.PropertyChanged -= new PropertyChangedEventHandler(Child_PropertyChanged);
 
-      //IBindingList list = item as IBindingList;
-      //if(list!=null)
-      //  list.ListChanged -= new ListChangedEventHandler(Child_ListChanged);
-
       INotifyChildChanged child = item as INotifyChildChanged;
       if (child != null)
         child.ChildChanged -= new EventHandler<ChildChangedEventArgs>(Child_Changed);
     }
-
-    #endregion
-
-    #region ISerializationNotification Members
 
     /// <summary>
     /// This method is called on a newly deserialized object
@@ -307,15 +278,6 @@ namespace Csla.Core
       // could override if needed
     }
 
-    [OnDeserialized]
-    private void OnDeserializedHandler(StreamingContext context)
-    {
-      foreach (T item in this)
-        OnAddEventHooks(item);
-
-      OnDeserialized();
-    }
-
     void ISerializationNotification.Deserialized()
     {
       // don't rehook events here, because the MobileFormatter has
@@ -324,9 +286,14 @@ namespace Csla.Core
       OnDeserialized();
     }
 
-    #endregion
+    [System.Runtime.Serialization.OnDeserialized]
+    private void OnDeserializedHandler(System.Runtime.Serialization.StreamingContext context)
+    {
+      foreach (T item in this)
+        OnAddEventHooks(item);
 
-    #region Child Change Notification
+      OnDeserialized();
+    }
 
     [NonSerialized]
     [NotUndoable]
@@ -363,6 +330,39 @@ namespace Csla.Core
         _childChangedHandlers.Invoke(this, e);
     }
 
+#if NETFX_CORE || (ANDROID || IOS)
+
+    /// <summary>
+    /// Creates a ChildChangedEventArgs and raises the event.
+    /// </summary>
+    private void RaiseChildChanged(
+      object childObject, PropertyChangedEventArgs propertyArgs, NotifyCollectionChangedEventArgs listArgs)
+    {
+      ChildChangedEventArgs args = new ChildChangedEventArgs(childObject, propertyArgs, listArgs);
+      OnChildChanged(args);
+    }
+
+    /// <summary>
+    /// Handles any PropertyChanged event from 
+    /// a child object and echoes it up as
+    /// a ChildChanged event.
+    /// </summary>
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    protected virtual void Child_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+      RaiseChildChanged(sender, e, null);
+    }
+
+    /// <summary>
+    /// Handles any ChildChanged event from
+    /// a child object and echoes it up as
+    /// a ChildChanged event.
+    /// </summary>
+    private void Child_Changed(object sender, ChildChangedEventArgs e)
+    {
+      RaiseChildChanged(e.ChildObject, e.PropertyChangedArgs, e.CollectionChangedArgs);
+    }
+#else
     /// <summary>
     /// Creates a ChildChangedEventArgs and raises the event.
     /// </summary>
@@ -395,10 +395,7 @@ namespace Csla.Core
     {
       RaiseChildChanged(e.ChildObject, e.PropertyChangedArgs, e.ListChangedArgs);
     }
-
-    #endregion
-
-    #region SuppressListChanged
+#endif
 
     /// <summary>
     /// Use this object to suppress ListChangedEvents for an entire code block.
@@ -431,7 +428,5 @@ namespace Csla.Core
         _businessObject.RaiseListChangedEvents = _initialRaiseListChangedEvents;
       }
     }
-
-    #endregion
   }
 }

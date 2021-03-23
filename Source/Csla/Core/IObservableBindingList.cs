@@ -1,14 +1,11 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="IObservableBindingList.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Defines additional elements for an</summary>
 //-----------------------------------------------------------------------
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Csla.Core
 {
@@ -19,17 +16,10 @@ namespace Csla.Core
   /// </summary>
   public interface IObservableBindingList
   {
-#if SILVERLIGHT || NETFX_CORE
-    /// <summary>
-    /// Creates and adds a new item to the collection.
-    /// </summary>
-    void AddNew();
-#else
     /// <summary>
     /// Creates and adds a new item to the collection.
     /// </summary>
     object AddNew();
-#endif
     /// <summary>
     /// Event indicating that an item is being
     /// removed from the list.

@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="DataMapper.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Map data from a source into a target object</summary>
 //-----------------------------------------------------------------------
@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Csla.Properties;
 using Csla.Reflection;
+using System.Linq;
 
 namespace Csla.Data
 {
@@ -63,7 +64,7 @@ namespace Csla.Data
     /// <param name="target">An object with properties to be set from the dictionary.</param>
     /// <param name="ignoreList">A list of property names to ignore. 
     /// These properties will not be set on the target object.</param>
-    /// <param name="suppressExceptions">If <see langword="true" />, any exceptions will be supressed.</param>
+    /// <param name="suppressExceptions">If true, any exceptions will be supressed.</param>
     /// <remarks>
     /// The key names in the dictionary must match the property names on the target
     /// object. Target properties may not be readonly or indexed.
@@ -126,7 +127,7 @@ namespace Csla.Data
     /// <param name="target">A name/value dictionary containing the source values.</param>
     /// <param name="ignoreList">A list of property names to ignore. 
     /// These properties will not be set on the target object.</param>
-    /// <param name="suppressExceptions">If <see langword="true" />, any exceptions will be supressed.</param>
+    /// <param name="suppressExceptions">If true, any exceptions will be supressed.</param>
     public static void Map(
       object source, Dictionary<string, object> target,
       bool suppressExceptions,
@@ -198,7 +199,7 @@ namespace Csla.Data
     /// <param name="target">An object with properties to be set from the dictionary.</param>
     /// <param name="ignoreList">A list of property names to ignore. 
     /// These properties will not be set on the target object.</param>
-    /// <param name="suppressExceptions">If <see langword="true" />, any exceptions will be supressed.</param>
+    /// <param name="suppressExceptions">If true, any exceptions will be supressed.</param>
     /// <remarks>
     /// <para>
     /// The property names and types of the source object must match the property names and types
@@ -259,7 +260,7 @@ namespace Csla.Data
     /// </summary>
     /// <param name="source">An object containing the source values.</param>
     /// <param name="target">An object with properties to be set from the dictionary.</param>
-    /// <param name="suppressExceptions">If <see langword="true" />, any exceptions will be supressed.</param>
+    /// <param name="suppressExceptions">If true, any exceptions will be supressed.</param>
     /// <param name="map">A DataMap object containing the mappings to use during the copy process.</param>
     /// <remarks>
     /// The property names and types of the source object must match the property names and types
@@ -287,13 +288,13 @@ namespace Csla.Data
 
       private static IList<string> GetPropertyNames(Type sourceType)
       {
-          List<string> result = new List<string>();
-          PropertyDescriptorCollection props = TypeDescriptor.GetProperties(sourceType);
-          foreach (PropertyDescriptor item in props)
-              if (item.IsBrowsable)
-                  result.Add(item.Name);
-          return result;          
-      }
+        List<string> result = new List<string>();
+        PropertyDescriptorCollection props = TypeDescriptor.GetProperties(sourceType);
+        foreach (PropertyDescriptor item in props)
+            if (item.IsBrowsable)
+                result.Add(item.Name);
+        return result;
+    }
     #endregion
 
     #region  Load from IDictionary
@@ -324,9 +325,9 @@ namespace Csla.Data
         validTarget.LoadProperty(p, source[nameMapper(p.Name)]);
     }
 
-    #endregion
+#endregion
 
-    #region  Load to IDictionary
+#region  Load to IDictionary
 
     /// <summary>
     /// Copies values from the source into the
@@ -354,9 +355,9 @@ namespace Csla.Data
         target[nameMapper(p.Name)] = validSource.ReadProperty(p);
     }
 
-    #endregion
+#endregion
 
-    #region SetValue
+#region SetValue
 
     /// <summary>
     /// Sets an object's property with the specified value,
@@ -378,10 +379,13 @@ namespace Csla.Data
 
       Type pType = handle.MemberType;
 
-      if (!pType.IsGenericType
-          || (pType.IsGenericType && pType.GetGenericTypeDefinition() != typeof(Nullable<>)))
+      var isGeneric = pType.IsGenericType;
+      var isPrimitive = pType.IsPrimitive;
+      var isValueType = pType.IsValueType;
+      if (!isGeneric
+          || (isGeneric && pType.GetGenericTypeDefinition() != typeof(Nullable<>)))
       {
-        if (pType.IsValueType && (pType.IsPrimitive || pType == typeof(decimal)) && value == null)
+        if (isValueType && (isPrimitive || pType == typeof(decimal)) && value == null)
         {
           value = 0;
         }
@@ -422,6 +426,6 @@ namespace Csla.Data
       return handle.DynamicMemberGet.Invoke(target);
     }
 
-    #endregion
+#endregion
   }
 }

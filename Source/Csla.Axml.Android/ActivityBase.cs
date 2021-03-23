@@ -1,7 +1,7 @@
 ﻿﻿//-----------------------------------------------------------------------
 // <copyright file="ActivityBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>CSLA helper to be used in place of the normal Xamarin Android activity that contains a reference to a CSLA ViewModel and a BindingManager</summary>
 //-----------------------------------------------------------------------
@@ -9,6 +9,7 @@
 using Android.App;
 using Android.OS;
 using Csla.Axml.Binding;
+using Csla.Serialization;
 using Csla.Serialization.Mobile;
 
 namespace Csla.Axml
@@ -41,7 +42,7 @@ namespace Csla.Axml
         }
 
         /// <summary>
-        /// Serializes the ViewModel's model property using the MobileFormatter.  Used to serialize and transfer models between activities.
+        /// Serializes the ViewModel's model property using the SerializationFormatterFactory.GetFormatter().  Used to serialize and transfer models between activities.
         /// </summary>
         /// <returns>An array of bytes that contains the serialized model.</returns>
         protected byte[] SerilizeModelForParameter()
@@ -50,13 +51,13 @@ namespace Csla.Axml
         }
 
         /// <summary>
-        /// Serialized the provided model using the MobileFormatter.  Used to serialize and transfer models between activities.
+        /// Serialized the provided model using the SerializationFormatterFactory.GetFormatter().  Used to serialize and transfer models between activities.
         /// </summary>
         /// <param name="model">A reference to the model to serialize.</param>
         /// <returns>An array of bytes that contains the serialized model.</returns>
         protected byte[] SerilizeModelForParameter(object model)
         {
-            return MobileFormatter.Serialize(model);
+            return SerializationFormatterFactory.GetFormatter().Serialize(model);
         }
 
         /// <summary>
@@ -66,7 +67,7 @@ namespace Csla.Axml
         /// <returns>A reference to the deserialized object.  An exception will be thrown if the supplied byte array is not valid for deserializaiton.</returns>
         protected object DeserializeFromParameter(byte[] parameter)
         {
-            return MobileFormatter.Deserialize(parameter);
+            return SerializationFormatterFactory.GetFormatter().Deserialize(parameter);
         }
     }
 }

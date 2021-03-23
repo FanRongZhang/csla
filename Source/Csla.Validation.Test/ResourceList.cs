@@ -20,9 +20,6 @@ namespace ProjectTracker.Library
       return DataPortal.Fetch<ResourceList>();
     }
 
-    private ResourceList()
-    { /* require use of factory methods */ }
-
     #endregion
 
     #region  Data Access    

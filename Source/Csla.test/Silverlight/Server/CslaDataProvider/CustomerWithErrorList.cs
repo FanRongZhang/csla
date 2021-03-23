@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="CustomerWithErrorList.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -19,21 +19,7 @@ namespace cslalighttest.CslaDataProvider
   [Serializable]
   public class CustomerWithErrorList : BusinessListBase<CustomerWithErrorList, CustomerWithError>
   {
-#if SILVERLIGHT
-    public CustomerWithErrorList() { }
-
-    protected override void AddNewCore()
-    {
-      CustomerWithError newItem = CustomerWithError.NewCustomerWithError();
-      this.Add(newItem);
-    }
-
-#else
     private CustomerWithErrorList() { }
-#endif
-
-
-#if !SILVERLIGHT
 
     protected void DataPortal_Fetch()
     {
@@ -53,17 +39,10 @@ namespace cslalighttest.CslaDataProvider
     {
       if (this.Items[0].ThrowException)
         throw new Exception();
+#pragma warning disable CS0618 // Type or member is obsolete
       Csla.ApplicationContext.GlobalContext["CustomerWithErrorUpdate"] = "Updating CustomerWithError List";
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
-#else
-    public static void GetCustomerWithErrorList(EventHandler<DataPortalResult<CustomerWithErrorList>> handler)
-    {
-      DataPortal<CustomerWithErrorList> dp = new DataPortal<CustomerWithErrorList>();
-      dp.FetchCompleted += handler;
-      dp.BeginFetch();
-    }
-
-#endif
   }
 }

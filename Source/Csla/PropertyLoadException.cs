@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="PropertyLoadException.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Exception indicating a failure to</summary>
 //-----------------------------------------------------------------------
@@ -34,6 +34,7 @@ namespace Csla
       : base(message, ex)
     { }
 
+#if !NETFX_CORE
     /// <summary>
     /// Creates an instance of the object for serialization.
     /// </summary>
@@ -52,5 +53,6 @@ namespace Csla
     {
       base.GetObjectData(info, context);
     }
+#endif
   }
 }

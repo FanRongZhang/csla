@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="FilteredBindingList.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Provides a filtered view into an existing IList(Of T).</summary>
 //-----------------------------------------------------------------------
@@ -582,7 +582,7 @@ namespace Csla
     /// item is contained in the list.
     /// </summary>
     /// <param name="item">Item to find.</param>
-    /// <returns><see langword="true"/> if the item is
+    /// <returns>true if the item is
     /// contained in the list.</returns>
     public bool Contains(T item)
     {
@@ -657,7 +657,7 @@ namespace Csla
     /// Removes an item from the list.
     /// </summary>
     /// <param name="item">Item to remove.</param>
-    /// <returns><see langword="true"/> if the 
+    /// <returns>true if the 
     /// remove succeeds.</returns>
     public bool Remove(T item)
     {

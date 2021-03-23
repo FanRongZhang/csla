@@ -1,4 +1,5 @@
-﻿#pragma warning disable
+﻿#if !NETSTANDARD2_0 && !NET5_0
+#pragma warning disable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,6 @@ using System.ServiceModel;
 
 namespace Csla.DataPortalClient
 {
-#if NET40
-#else
   [System.ServiceModel.ServiceContractAttribute(Namespace = "http://ws.lhotka.net/WcfDataPortal", ConfigurationName = "WcfPortal.IWcfPortal")]
   public interface IWcfPortal
   {
@@ -42,5 +41,5 @@ namespace Csla.DataPortalClient
     [System.ServiceModel.OperationContractAttribute(Action = "http://ws.lhotka.net/WcfDataPortal/IWcfPortal/Delete", ReplyAction = "http://ws.lhotka.net/WcfDataPortal/IWcfPortal/DeleteResponse")]
     System.Threading.Tasks.Task<WcfResponse> DeleteAsync(DeleteRequest request);
   }
-#endif
 }
+#endif

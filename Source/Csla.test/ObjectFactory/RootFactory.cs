@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="RootFactory.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -23,11 +23,17 @@ namespace Csla.Test.ObjectFactory
       return obj;
     }
 
+    public object Create(int test)
+    {
+      // add overload to test reflection
+      return null;
+    }
+
     [RunLocal]
-    public object Create(SingleCriteria<Root, string> criteria)
+    public object Create(string criteria)
     {
       var obj = new Root();
-      obj.Data = "Create " + criteria.Value;
+      obj.Data = "Create " + criteria;
       obj.Location = ApplicationContext.ExecutionLocation;
       obj.MarkAsNew();
       return obj;
@@ -41,10 +47,10 @@ namespace Csla.Test.ObjectFactory
       return obj;
     }
 
-    public object Fetch(SingleCriteria<Root, string> criteria)
+    public object Fetch(string criteria)
     {
       var obj = new Root();
-      obj.Data = criteria.Value;
+      obj.Data = criteria;
       obj.MarkAsOld();
       return obj;
     }
@@ -75,9 +81,35 @@ namespace Csla.Test.ObjectFactory
       return obj;
     }
 
-    public void Delete(SingleCriteria<Root, string> criteria)
+    public void Delete(string criteria)
     {
       Csla.ApplicationContext.GlobalContext["ObjectFactory"] = "Delete";
+    }
+
+    private TransactionalTypes _transactionalType;
+
+    public void Invoke(Csla.DataPortalEventArgs args)
+    {
+      _transactionalType = args.DataPortalContext.TransactionalType;
+    }
+  }
+
+  public class RootFactoryC
+  {
+    public object Create(int test)
+    {
+      // add overload to test reflection
+      return null;
+    }
+
+    [RunLocal]
+    public object Create(string criteria)
+    {
+      var obj = new Root();
+      obj.Data = "Create " + criteria;
+      obj.Location = ApplicationContext.ExecutionLocation;
+      obj.MarkAsNew();
+      return obj;
     }
 
     private TransactionalTypes _transactionalType;

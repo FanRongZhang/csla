@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="SimpleRoot.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>The unique ID of this object</summary>
 //-----------------------------------------------------------------------
@@ -88,12 +88,7 @@ namespace Csla.Test.AppContext
         {
           Csla.DataPortal.Delete<SimpleRoot>(new Criteria(Data));
         }
-        /// <summary>
-        /// Prevent direct creation
-        /// </summary>
-        private SimpleRoot()
-        {
-        }
+
         /// <summary>
         /// Handles new DataPortal Create calls
         /// </summary>

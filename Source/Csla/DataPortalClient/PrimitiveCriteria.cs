@@ -1,12 +1,11 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="PrimitiveCriteria.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Class used as a wrapper for criteria based requests that use primitives</summary>
 //-----------------------------------------------------------------------
 using System;
-using Csla.Serialization;
 using Csla.Serialization.Mobile;
 
 namespace Csla.DataPortalClient

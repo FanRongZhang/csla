@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="ISerializationNotification.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Interface defining callback methods used</summary>
 //-----------------------------------------------------------------------
@@ -11,7 +11,7 @@ namespace Csla.Serialization.Mobile
 {
   /// <summary>
   /// Interface defining callback methods used
-  /// by the MobileFormatter.
+  /// by the SerializationFormatterFactory.GetFormatter().
   /// </summary>
   public interface ISerializationNotification
   {

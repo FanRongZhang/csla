@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="BackgroundWorker.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Wraps a System.ComponentModel.BackgroundWorker and transfers ApplicationContext.User, ClientContest, GlobalContext, CurrentCulture and CurrentUICulture to background thread.</summary>
 //-----------------------------------------------------------------------
@@ -9,11 +9,6 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Threading;
-#if NETFX_CORE
-using System.Threading.Tasks;
-using Windows.ApplicationModel.Resources.Core;
-using System.Collections.Generic;
-#endif
 
 namespace Csla.Threading
 {
@@ -21,11 +16,7 @@ namespace Csla.Threading
   /// A BackgroundWorker that wraps a System.ComponentModel.BackgroundWorkertransfers ApplicationContext.User, ClientContext, GlobalContext, CurrentCulture 
   /// and CurrentUICulture to the background thread.
   /// </summary>
-#if SILVERLIGHT || NETFX_CORE
-  public class BackgroundWorker : System.Object
-#else
   public class BackgroundWorker : System.ComponentModel.Component
-#endif
   {
     private readonly System.ComponentModel.BackgroundWorker _myWorker = new System.ComponentModel.BackgroundWorker();
     /// <summary>
@@ -46,9 +37,7 @@ namespace Csla.Threading
     /// <summary>
     /// Occurs when <see cref="M:System.ComponentModel.BackgroundWorker.RunWorkerAsync"/> is called.
     /// </summary>
-#if !NETFX_CORE
     [Description("Event handler to be run on a different thread when the operation begins."), Category("Asynchronous")]
-#endif
     public event DoWorkEventHandler DoWork
     {
       add
@@ -64,9 +53,7 @@ namespace Csla.Threading
     /// <summary>
     /// Occurs when the background operation has completed, has been canceled, or has raised an exception.
     /// </summary>
-#if !NETFX_CORE
     [Description("Raised when the worker has completed (either through success, failure or cancellation)."), Category("Asynchronous")]
-#endif
     public event RunWorkerCompletedEventHandler RunWorkerCompleted
     {
       add
@@ -83,9 +70,7 @@ namespace Csla.Threading
     /// <summary>
     /// Occurs when <see cref="M:System.ComponentModel.BackgroundWorker.ReportProgress"/> is called.
     /// </summary>
-#if !NETFX_CORE
     [Description("Occurs when ReportProgress is called.).")]
-#endif
     public event ProgressChangedEventHandler ProgressChanged
     {
       add
@@ -176,7 +161,7 @@ namespace Csla.Threading
       }
     }
 
-    #region Worker Async Request
+#region Worker Async Request
 
     private class WorkerAsyncRequest : ContextParams
     {
@@ -203,9 +188,9 @@ namespace Csla.Threading
       }
     }
 
-    #endregion
+#endregion
 
-    #region GlobalContext
+#region GlobalContext
 
 
     /// <summary>
@@ -214,9 +199,9 @@ namespace Csla.Threading
     /// </summary>
     public Csla.Core.ContextDictionary GlobalContext { get; private set; }
 
-    #endregion
+#endregion
 
-    #region RunWorkerAsync
+#region RunWorkerAsync
 
     /// <summary>
     /// Starts execution of a background operation.
@@ -245,9 +230,9 @@ namespace Csla.Threading
     }
 
 
-    #endregion
+#endregion
 
-    #region Private methods
+#region Private methods
 
     /// <summary>
     /// Run the internal DoWork
@@ -270,13 +255,17 @@ namespace Csla.Threading
         {
           _myDoWork.Invoke(this, doWorkEventArgs);
         }
+#pragma warning disable CS0618 // Type or member is obsolete
         e.Result = new WorkerAsyncResult(doWorkEventArgs.Result, Csla.ApplicationContext.GlobalContext, null);
+#pragma warning restore CS0618 // Type or member is obsolete
         e.Cancel = doWorkEventArgs.Cancel;
       }
       // must implement exception handling and return exception in WorkerAsyncResult
       catch (Exception ex)
       {
+#pragma warning disable CS0618 // Type or member is obsolete
         e.Result = new WorkerAsyncResult(null, Csla.ApplicationContext.GlobalContext, ex);
+#pragma warning restore CS0618 // Type or member is obsolete
       }
     }
 
@@ -352,6 +341,6 @@ namespace Csla.Threading
       _myWorker.ReportProgress(percentProgress, userState);
     }
 
-    #endregion
+#endregion
   }
 }

@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="NameValueListBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This is the base class from which readonly name/value</summary>
 //-----------------------------------------------------------------------
@@ -10,7 +10,6 @@ using System.ComponentModel;
 using Csla.Properties;
 using Csla.Core;
 using Csla.Serialization.Mobile;
-using Csla.Serialization;
 
 namespace Csla
 {
@@ -129,8 +128,6 @@ namespace Csla
 
     #endregion
 
-    #region Constructors
-
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
@@ -138,8 +135,6 @@ namespace Csla
     {
       Initialize();
     }
-
-    #endregion
 
     #region Initialize
 
@@ -164,7 +159,7 @@ namespace Csla
       private K _key;
       private V _value;
 
-#if SILVERLIGHT || NETFX_CORE
+#if (ANDROID || IOS) || NETFX_CORE
       /// <summary>
       /// Creates an instance of the object.
       /// </summary>

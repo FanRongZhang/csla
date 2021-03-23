@@ -1,12 +1,12 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="MobileRequestProcessor.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
-// <summary>Object taht processes all the requests from a Silverlight client</summary>
+// <summary>Object that processes all the requests from a client</summary>
 //-----------------------------------------------------------------------
 using System;
-using System.Configuration;
+using Csla.Configuration;
 using System.Globalization;
 using System.Threading;
 using Csla.Properties;
@@ -15,12 +15,12 @@ using System.Threading.Tasks;
 namespace Csla.Server.Hosts.Mobile
 {
   /// <summary>
-  /// Object taht processes all the requests from a Silverlight client
+  /// Object that processes all the requests from a client
   /// </summary>
   public class MobileRequestProcessor
   {
 
-    #region Factory Loader
+#region Factory Loader
 
     private static IMobileFactoryLoader _factoryLoader;
     /// <summary>
@@ -38,7 +38,7 @@ namespace Csla.Server.Hosts.Mobile
           string setting = ConfigurationManager.AppSettings["CslaMobileFactoryLoader"];
           if (!string.IsNullOrEmpty(setting))
             _factoryLoader =
-              (IMobileFactoryLoader)Activator.CreateInstance(Type.GetType(setting, true, true));
+              (IMobileFactoryLoader)Reflection.MethodCaller.CreateInstance(Type.GetType(setting, true, true));
           else
             _factoryLoader = new MobileFactoryLoader();
         }
@@ -50,20 +50,16 @@ namespace Csla.Server.Hosts.Mobile
       }
     }
 
-    #endregion
+#endregion
 
-    #region Operations
+#region Operations
 
     /// <summary>
     /// Create a new business object.
     /// </summary>
     /// <param name="request">The request parameter object.</param>
     /// <returns>Resulf of the create operation - an instance of a business object</returns>
-#if NET40
-    public MobileResponse Create(MobileCriteriaRequest request)
-#else
     public async Task<MobileResponse> Create(MobileCriteriaRequest request)
-#endif
     {
       var serverDataPortal = new Csla.Server.DataPortal();
       var result = new MobileResponse();
@@ -87,17 +83,10 @@ namespace Csla.Server.Hosts.Mobile
         var factoryInfo = GetMobileFactoryAttribute(businessObjectType);
         if (factoryInfo == null)
         {
-#if NET40
-          if (criteria != null)
-            newObject = Csla.DataPortal.Create(businessObjectType, criteria);
-          else
-            newObject = Csla.DataPortal.Create(businessObjectType, new EmptyCriteria());
-#else
           if (criteria != null)
             newObject = await Csla.Reflection.MethodCaller.CallGenericStaticMethodAsync(typeof(Csla.DataPortal), "CreateAsync", new Type[] { businessObjectType }, true, criteria).ConfigureAwait(false);
           else
             newObject = await Csla.Reflection.MethodCaller.CallGenericStaticMethodAsync(typeof(Csla.DataPortal), "CreateAsync", new Type[] { businessObjectType }, false, null).ConfigureAwait(false);
-#endif
         }
         else
         {
@@ -105,20 +94,15 @@ namespace Csla.Server.Hosts.Mobile
             throw new InvalidOperationException(Resources.CreateMethodNameNotSpecified);
 
           object f = FactoryLoader.GetFactory(factoryInfo.FactoryTypeName);
-#if NET40
-          if (criteria != null)
-            newObject = Csla.Reflection.MethodCaller.CallMethod(f, factoryInfo.CreateMethodName, criteria);
-          else
-            newObject = Csla.Reflection.MethodCaller.CallMethod(f, factoryInfo.CreateMethodName);
-#else
           if (criteria != null)
             newObject = await Csla.Reflection.MethodCaller.CallMethodTryAsync(f, factoryInfo.CreateMethodName, criteria).ConfigureAwait(false);
           else
             newObject = await Csla.Reflection.MethodCaller.CallMethodTryAsync(f, factoryInfo.CreateMethodName).ConfigureAwait(false);
-#endif
         }
         result.Object = newObject;
+#pragma warning disable CS0618 // Type or member is obsolete
         result.GlobalContext = ApplicationContext.GlobalContext;
+#pragma warning restore CS0618 // Type or member is obsolete
       }
       catch (Csla.Reflection.CallMethodException ex)
       {
@@ -146,11 +130,7 @@ namespace Csla.Server.Hosts.Mobile
     /// </summary>
     /// <param name="request">The request parameter object.</param>
     /// <returns>Result of the fetch operation - an instance of a business object</returns>
-#if NET40
-    public MobileResponse Fetch(MobileCriteriaRequest request)
-#else
     public async Task<MobileResponse> Fetch(MobileCriteriaRequest request)
-#endif
     {
       var serverDataPortal = new Csla.Server.DataPortal();
       var result = new MobileResponse();
@@ -176,17 +156,10 @@ namespace Csla.Server.Hosts.Mobile
         var factoryInfo = GetMobileFactoryAttribute(businessObjectType);
         if (factoryInfo == null)
         {
-#if NET40
-          if (criteria == null)
-            newObject = Csla.DataPortal.Fetch(businessObjectType, new EmptyCriteria());
-          else
-            newObject = Csla.DataPortal.Fetch(businessObjectType, criteria);
-#else
           if (criteria != null)
             newObject = await Csla.Reflection.MethodCaller.CallGenericStaticMethodAsync(typeof(Csla.DataPortal), "FetchAsync", new Type[] { businessObjectType }, true, criteria).ConfigureAwait(false);
           else
             newObject = await Csla.Reflection.MethodCaller.CallGenericStaticMethodAsync(typeof(Csla.DataPortal), "FetchAsync", new Type[] { businessObjectType }, false, null).ConfigureAwait(false);
-#endif
         }
         else
         {
@@ -194,20 +167,15 @@ namespace Csla.Server.Hosts.Mobile
             throw new InvalidOperationException(Resources.FetchMethodNameNotSpecified);
 
           object f = FactoryLoader.GetFactory(factoryInfo.FactoryTypeName);
-#if NET40
-          if (criteria != null)
-            newObject = Csla.Reflection.MethodCaller.CallMethod(f, factoryInfo.FetchMethodName, criteria);
-          else
-            newObject = Csla.Reflection.MethodCaller.CallMethod(f, factoryInfo.FetchMethodName);
-#else
           if (criteria != null)
             newObject = await Csla.Reflection.MethodCaller.CallMethodTryAsync(f, factoryInfo.FetchMethodName, criteria).ConfigureAwait(false);
           else
             newObject = await Csla.Reflection.MethodCaller.CallMethodTryAsync(f, factoryInfo.FetchMethodName).ConfigureAwait(false);
-#endif
         }
         result.Object = newObject;
+#pragma warning disable CS0618 // Type or member is obsolete
         result.GlobalContext = ApplicationContext.GlobalContext;
+#pragma warning restore CS0618 // Type or member is obsolete
       }
       catch (Csla.Reflection.CallMethodException ex)
       {
@@ -235,11 +203,7 @@ namespace Csla.Server.Hosts.Mobile
     /// </summary>
     /// <param name="request">The request parameter object.</param>
     /// <returns>Result of the update operation - updated object</returns>
-#if NET40
-    public MobileResponse Update(MobileUpdateRequest request)
-#else
     public async Task<MobileResponse> Update(MobileUpdateRequest request)
-#endif
     {
       var serverDataPortal = new Csla.Server.DataPortal();
       var result = new MobileResponse();
@@ -266,11 +230,7 @@ namespace Csla.Server.Hosts.Mobile
         var factoryInfo = GetMobileFactoryAttribute(businessObjectType);
         if (factoryInfo == null)
         {
-#if NET40
-          newObject = Csla.DataPortal.Update(obj);
-#else
           newObject = await Csla.Reflection.MethodCaller.CallGenericStaticMethodAsync(typeof(Csla.DataPortal), "UpdateAsync", new Type[] { businessObjectType }, true, obj).ConfigureAwait(false);
-#endif
         }
         else
         {
@@ -278,14 +238,12 @@ namespace Csla.Server.Hosts.Mobile
             throw new InvalidOperationException(Resources.UpdateMethodNameNotSpecified);
 
           object f = FactoryLoader.GetFactory(factoryInfo.FactoryTypeName);
-#if NET40
-          newObject = Csla.Reflection.MethodCaller.CallMethod(f, factoryInfo.UpdateMethodName, obj);
-#else
           newObject = await Csla.Reflection.MethodCaller.CallMethodTryAsync(f, factoryInfo.UpdateMethodName, obj).ConfigureAwait(false);
-#endif
         }
         result.Object = newObject;
+#pragma warning disable CS0618 // Type or member is obsolete
         result.GlobalContext = ApplicationContext.GlobalContext;
+#pragma warning restore CS0618 // Type or member is obsolete
       }
       catch (Csla.Reflection.CallMethodException ex)
       {
@@ -313,11 +271,7 @@ namespace Csla.Server.Hosts.Mobile
     /// </summary>
     /// <param name="request">The request parameter object.</param>
     /// <returns>Result of the delete operation</returns>
-#if NET40
-    public MobileResponse Delete(MobileCriteriaRequest request)
-#else
     public async Task<MobileResponse> Delete(MobileCriteriaRequest request)
-#endif
     {
       var serverDataPortal = new Csla.Server.DataPortal();
       var result = new MobileResponse();
@@ -342,11 +296,7 @@ namespace Csla.Server.Hosts.Mobile
         var factoryInfo = GetMobileFactoryAttribute(businessObjectType);
         if (factoryInfo == null)
         {
-#if NET40
-          Csla.DataPortal.Delete(businessObjectType, criteria);
-#else
           await Csla.Reflection.MethodCaller.CallGenericStaticMethodAsync(typeof(Csla.DataPortal), "DeleteAsync", new Type[] { businessObjectType }, true, criteria).ConfigureAwait(false);
-#endif
         }
         else
         {
@@ -354,13 +304,11 @@ namespace Csla.Server.Hosts.Mobile
             throw new InvalidOperationException(Resources.DeleteMethodNameNotSpecified);
 
           object f = FactoryLoader.GetFactory(factoryInfo.FactoryTypeName);
-#if NET40
-          Csla.Reflection.MethodCaller.CallMethod(f, factoryInfo.DeleteMethodName, criteria);
-#else
           await Csla.Reflection.MethodCaller.CallMethodTryAsync(f, factoryInfo.DeleteMethodName, criteria).ConfigureAwait(false);
-#endif
         }
+#pragma warning disable CS0618 // Type or member is obsolete
         result.GlobalContext = ApplicationContext.GlobalContext;
+#pragma warning restore CS0618 // Type or member is obsolete
       }
       catch (Csla.Reflection.CallMethodException ex)
       {
@@ -383,9 +331,9 @@ namespace Csla.Server.Hosts.Mobile
       return result;
     }
 
-    #endregion
+#endregion
 
-    #region Mobile Factory
+#region Mobile Factory
 
     private static MobileFactoryAttribute GetMobileFactoryAttribute(Type objectType)
     {
@@ -396,11 +344,14 @@ namespace Csla.Server.Hosts.Mobile
         return null;
     }
 
-    #endregion
+#endregion
 
-    #region Context and Criteria
+#region Context and Criteria
     private void SetContext(IMobileRequest request)
     {
+      ApplicationContext.SetExecutionLocation(ApplicationContext.ExecutionLocations.Server);
+      ApplicationContext.SetLogicalExecutionLocation(ApplicationContext.LogicalExecutionLocations.Server);
+
       ApplicationContext.SetContext(request.ClientContext, request.GlobalContext);
       if (ApplicationContext.AuthenticationType != "Windows")
         ApplicationContext.User = request.Principal;
@@ -417,7 +368,7 @@ namespace Csla.Server.Hosts.Mobile
         ApplicationContext.User = new System.Security.Principal.GenericPrincipal(new System.Security.Principal.GenericIdentity(string.Empty), new string[] { });
     }
 
-    #region client culture
+#region client culture
     /// <summary>
     /// Sets the client cultures on current tread.
     /// </summary>
@@ -459,8 +410,8 @@ namespace Csla.Server.Hosts.Mobile
       }
     }
 
-    #endregion 
+#endregion
 
-    #endregion
+#endregion
   }
 }

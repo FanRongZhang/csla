@@ -1,7 +1,8 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETFX_CORE && !(ANDROID || IOS) 
+//-----------------------------------------------------------------------
 // <copyright file="TransactionIsolationLevel.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Specifies an isolation level for transactions</summary>
 namespace Csla
@@ -40,3 +41,4 @@ namespace Csla
     ReadUncommitted
   }
 }
+#endif

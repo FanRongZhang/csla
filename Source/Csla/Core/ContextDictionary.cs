@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="ContextDictionary.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Dictionary type that is serializable</summary>
 //-----------------------------------------------------------------------
@@ -13,11 +13,23 @@ namespace Csla.Core
 {
   /// <summary>
   /// Dictionary type that is serializable
-  /// with the MobileFormatter.
+  /// with the SerializationFormatterFactory.GetFormatter().
   /// </summary>
   [Serializable()]
   public class ContextDictionary : HybridDictionary, IMobileObject
   {
+    /// <summary>
+    /// Get a value from the dictionary, or return null
+    /// if the key is not found in the dictionary.
+    /// </summary>
+    /// <param name="key">Key of value to get from dictionary.</param>
+    public  object GetValueOrNull(string key)
+    {
+      if (this.Contains(key))
+        return this[key];
+      return null;
+    }
+
     #region IMobileObject Members
 
     void IMobileObject.GetState(SerializationInfo info)
@@ -61,6 +73,6 @@ namespace Csla.Core
       }
     }
 
-    #endregion
+#endregion
   }
 }

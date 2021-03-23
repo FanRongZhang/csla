@@ -1,11 +1,11 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETFX_CORE && !MONO && !(ANDROID || IOS) && !NETSTANDARD2_0 && !NET5_0
+//-----------------------------------------------------------------------
 // <copyright file="DataServiceContextManager.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Provides an automated way to reuse </summary>
 //-----------------------------------------------------------------------
-#if !MONO
 using System;
 using System.Collections.Generic;
 
@@ -54,7 +54,7 @@ namespace Csla.Data
 
     private DataServiceContextManager(Uri path)
     {
-      _context = (C)(Activator.CreateInstance(typeof(C), path));
+      _context = (C)(Reflection.MethodCaller.CreateInstance(typeof(C), path));
     }
 
     /// <summary>

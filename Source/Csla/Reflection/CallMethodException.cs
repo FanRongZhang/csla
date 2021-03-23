@@ -1,17 +1,12 @@
 //-----------------------------------------------------------------------
 // <copyright file="CallMethodException.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This exception is returned from the </summary>
 //-----------------------------------------------------------------------
 using System;
-#if !NETFX_CORE
 using System.Security.Permissions;
-#endif
-#if SILVERLIGHT || NETFX_CORE
-using Csla.Serialization;
-#endif
 
 namespace Csla.Reflection
 {
@@ -56,7 +51,6 @@ namespace Csla.Reflection
       _innerStackTrace = ex.StackTrace;
     }
 
-#if !SILVERLIGHT && !NETFX_CORE
     /// <summary>
     /// Creates an instance of the object for deserialization.
     /// </summary>
@@ -75,7 +69,7 @@ namespace Csla.Reflection
     /// <param name="info">Serialization info.</param>
     /// <param name="context">Serialization context.</param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:ValidateArgumentsOfPublicMethods")]
-#if !SILVERLIGHT && !NETFX_CORE && !__ANDROID__
+#if !NET5_0
     [SecurityPermission(SecurityAction.LinkDemand, Flags = SecurityPermissionFlag.SerializationFormatter)]
     [SecurityPermission(SecurityAction.Demand, Flags = SecurityPermissionFlag.SerializationFormatter)]
 #endif
@@ -84,6 +78,5 @@ namespace Csla.Reflection
       base.GetObjectData(info, context);
       info.AddValue("_innerStackTrace", _innerStackTrace);
     }
-#endif
   }
 }

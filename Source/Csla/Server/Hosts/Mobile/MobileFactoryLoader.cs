@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="MobileFactoryLoader.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Class containing the default implementation for</summary>
 //-----------------------------------------------------------------------
@@ -16,7 +16,7 @@ namespace Csla.Server.Hosts.Mobile
   /// <summary>
   /// Class containing the default implementation for
   /// the FactoryLoader delegate used by the
-  /// Silverlight data portal host.
+  /// data portal host.
   /// </summary>
   public class MobileFactoryLoader : IMobileFactoryLoader
   {
@@ -40,7 +40,7 @@ namespace Csla.Server.Hosts.Mobile
       if (ft == null)
         throw new InvalidOperationException(
           string.Format(Resources.FactoryTypeNotFoundException, factoryName));
-      return Activator.CreateInstance(ft);
+      return Reflection.MethodCaller.CreateInstance(ft);
     }
   }
 }

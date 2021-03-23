@@ -1,20 +1,20 @@
 //-----------------------------------------------------------------------
 // <copyright file="UndoableBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://www.lhotka.net/cslanet/
 // </copyright>
 // <summary>Implements n-level undo capabilities as</summary>
 //-----------------------------------------------------------------------
 using System;
-using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.Reflection;
 using System.IO;
-using Csla.Serialization;
 using System.ComponentModel;
 using Csla.Properties;
 using Csla.Reflection;
 using Csla.Serialization.Mobile;
+using Csla.Serialization;
+using System.Linq;
 
 namespace Csla.Core
 {
@@ -118,38 +118,49 @@ namespace Csla.Core
       CopyingState();
 
       Type currentType = this.GetType();
-      HybridDictionary state = new HybridDictionary();
+      var state = new MobileDictionary<string, object>();
 
       if (this.EditLevel + 1 > parentEditLevel)
-        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "CopyState"));
+        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "CopyState"), this.GetType().Name, null, this.EditLevel, parentEditLevel - 1);
 
       do
       {
         var currentTypeName = currentType.FullName;
         // get the list of fields in this type
-        List<DynamicMemberHandle> handlers = 
+        List<DynamicMemberHandle> handlers =
           UndoableHandler.GetCachedFieldHandlers(currentType);
         foreach (var h in handlers)
         {
           var value = h.DynamicMemberGet(this);
-          if (typeof(Csla.Core.IUndoableObject).IsAssignableFrom(h.MemberType))
+          var fieldName = GetFieldName(currentTypeName, h.MemberName);
+
+          if (typeof(IUndoableObject).IsAssignableFrom(h.MemberType))
           {
-            // make sure the variable has a value
             if (value == null)
             {
               // variable has no value - store that fact
-              state.Add(GetFieldName(currentTypeName, h.MemberName), null);
+              state.Add(fieldName, null);
             }
             else
             {
               // this is a child object, cascade the call
-              ((Core.IUndoableObject)value).CopyState(this.EditLevel + 1, BindingEdit);
+              ((IUndoableObject)value).CopyState(this.EditLevel + 1, BindingEdit);
+            }
+          }
+          else if (value is IMobileObject)
+          {
+            // this is a mobile object, store the serialized value
+            using (MemoryStream buffer = new MemoryStream())
+            {
+              var formatter = SerializationFormatterFactory.GetFormatter();
+              formatter.Serialize(buffer, value);
+              state.Add(fieldName, buffer.ToArray());
             }
           }
           else
           {
             // this is a normal field, simply trap the value
-            state.Add(GetFieldName(currentTypeName, h.MemberName), value);
+            state.Add(fieldName, value);
           }
         }
 
@@ -159,8 +170,7 @@ namespace Csla.Core
       // serialize the state and stack it
       using (MemoryStream buffer = new MemoryStream())
       {
-        ISerializationFormatter formatter =
-          SerializationFormatterFactory.GetFormatter();
+        var formatter = SerializationFormatterFactory.GetFormatter();
         formatter.Serialize(buffer, state);
         _stateStack.Push(buffer.ToArray());
       }
@@ -206,15 +216,14 @@ namespace Csla.Core
       if (EditLevel > 0)
       {
         if (this.EditLevel - 1 != parentEditLevel)
-          throw new UndoException(string.Format(Resources.EditLevelMismatchException, "UndoChanges"));
+          throw new UndoException(string.Format(Resources.EditLevelMismatchException, "UndoChanges"), this.GetType().Name, null, this.EditLevel, parentEditLevel + 1);
 
-        HybridDictionary state;
+        MobileDictionary<string, object> state;
         using (MemoryStream buffer = new MemoryStream(_stateStack.Pop()))
         {
           buffer.Position = 0;
-          ISerializationFormatter formatter =
-            SerializationFormatterFactory.GetFormatter();
-          state = (HybridDictionary)formatter.Deserialize(buffer);
+          var formatter = SerializationFormatterFactory.GetFormatter();
+          state = (MobileDictionary<string, object>)formatter.Deserialize(buffer);
         }
 
         Type currentType = this.GetType();
@@ -229,13 +238,14 @@ namespace Csla.Core
           {
             // the field is undoable, so restore its value
             var value = h.DynamicMemberGet(this);
+            var fieldName = GetFieldName(currentTypeName, h.MemberName);
 
-            if (typeof(Csla.Core.IUndoableObject).IsAssignableFrom(h.MemberType))
+            if (typeof(IUndoableObject).IsAssignableFrom(h.MemberType))
             {
               // this is a child object
               // see if the previous value was empty
               //if (state.Contains(h.MemberName))
-              if (state.Contains(GetFieldName(currentTypeName, h.MemberName)))
+              if (state.Contains(fieldName))
               {
                 // previous value was empty - restore to empty
                 h.DynamicMemberSet(this, null);
@@ -246,16 +256,25 @@ namespace Csla.Core
                 if (value != null)
                 {
                   // this is a child object, cascade the call.
-                  ((Core.IUndoableObject)value).UndoChanges(this.EditLevel,
-                                                             BindingEdit);
+                  ((IUndoableObject)value).UndoChanges(this.EditLevel, BindingEdit);
                 }
+              }
+            }
+            else if (value is IMobileObject && state[fieldName] != null)
+            {
+              // this is a mobile object, deserialize the value
+              using (MemoryStream buffer = new MemoryStream((byte[])state[fieldName]))
+              {
+                buffer.Position = 0;
+                var formatter = SerializationFormatterFactory.GetFormatter();
+                var obj = formatter.Deserialize(buffer);
+                h.DynamicMemberSet(this, obj);
               }
             }
             else
             {
               // this is a regular field, restore its value
-              h.DynamicMemberSet(this, state[GetFieldName(currentTypeName, h.MemberName)]);
-              //h.DynamicMemberSet(this, state[h.MemberName]);
+              h.DynamicMemberSet(this, state[fieldName]);
             }
           }
 
@@ -298,7 +317,7 @@ namespace Csla.Core
       AcceptingChanges();
 
       if (this.EditLevel - 1 != parentEditLevel)
-        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "AcceptChanges"));
+        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "AcceptChanges"), this.GetType().Name, null, this.EditLevel, parentEditLevel + 1);
 
       if (EditLevel > 0)
       {
@@ -389,7 +408,15 @@ namespace Csla.Core
     /// </param>
     protected override void OnGetState(SerializationInfo info, StateMode mode)
     {
-      info.AddValue("_bindingEdit", _bindingEdit);
+      if (mode != StateMode.Undo)
+      {
+        info.AddValue("_bindingEdit", _bindingEdit);
+        if (_stateStack.Count > 0)
+        {
+          var stackArray = _stateStack.ToArray();
+          info.AddValue("_stateStack", stackArray);
+        }
+      }
       base.OnGetState(info, mode);
     }
 
@@ -405,9 +432,17 @@ namespace Csla.Core
     /// </param>
     protected override void OnSetState(SerializationInfo info, StateMode mode)
     {
-      _stateStack.Clear();
-
-      _bindingEdit = info.GetValue<bool>("_bindingEdit");
+      if (mode != StateMode.Undo)
+      {
+        _bindingEdit = info.GetValue<bool>("_bindingEdit");
+        if (info.Values.ContainsKey("_stateStack"))
+        {
+          var stackArray = info.GetValue<byte[][]>("_stateStack");
+          _stateStack.Clear();
+          foreach (var item in stackArray.Reverse())
+            _stateStack.Push(item);
+        }
+      }
       base.OnSetState(info, mode);
     }
 

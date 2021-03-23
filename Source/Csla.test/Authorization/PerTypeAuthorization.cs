@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="PerTypeAuthorization.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -35,7 +35,7 @@ namespace Csla.Test.Authorization
     [ExpectedException(typeof(Csla.Security.SecurityException))]
     public void DenyWritePerType()
     {
-      Csla.ApplicationContext.User = new Csla.Security.UnauthenticatedPrincipal();
+      Csla.ApplicationContext.User = new System.Security.Claims.ClaimsPrincipal();
       PerTypeAuthorization root = new PerTypeAuthorization();
       root.Test = "test";
     }

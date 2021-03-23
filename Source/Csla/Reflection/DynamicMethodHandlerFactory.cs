@@ -2,7 +2,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="DynamicMethodHandlerFactory.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Delegate for a dynamic constructor method.</summary>
 //-----------------------------------------------------------------------
@@ -219,7 +219,7 @@ namespace Csla.Reflection
       return lambda.Compile();
     }
 
-#if !NETFX_CORE && !IOS
+#if !NETFX_CORE && !IOS && !NETSTANDARD2_0 && !NET5_0
     private static void EmitCastToReference(ILGenerator il, Type type)
     {
       if (type.IsValueType)

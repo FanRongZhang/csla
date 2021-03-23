@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="BypassPropertyChecksTests.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -9,8 +9,8 @@ using Csla;
 using Csla.DataPortalClient;
 using Csla.Testing.Business.ReadOnlyTest;
 using System;
-using Csla.Testing.Business.Security;
 using UnitDriven;
+using System.Security.Claims;
 
 #if NUNIT
 using NUnit.Framework;
@@ -29,12 +29,19 @@ namespace Csla.Test.BypassPropertyChecks
   [TestClass]
   public class BypassPropertyChecksTests : TestBase
   {
+    private static ClaimsPrincipal GetPrincipal(params string[] roles)
+    {
+      var identity = new ClaimsIdentity();
+      foreach (var item in roles)
+        identity.AddClaim(new Claim(ClaimTypes.Role, item));
+      return new ClaimsPrincipal(identity);
+    }
 
     [TestMethod]
     public void TestBypassReadWriteWithRightsTurnNotificationBackOn()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin", "Random");
       bool propertyChangedFired = false;
       BypassBusinessBase testObj = new BypassBusinessBase();
       testObj.PropertyChanged += (o, e) =>
@@ -57,7 +64,7 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(true, testObj.IsDirty);
 
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new System.Security.Claims.ClaimsPrincipal();
       context.Complete();
     }
 
@@ -66,7 +73,7 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassReadWriteNoRightsTurnNotificationBackOn()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       bool propertyChangedFired = false;
 
       BypassBusinessBase testObj = new BypassBusinessBase();
@@ -78,20 +85,11 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(1, testObj.ReadId2ByPass());
       context.Assert.AreEqual(false, propertyChangedFired);
       context.Assert.AreEqual(false, testObj.IsDirty);
-#if !SILVERLIGHT
       testObj.LoadId2(2);
       context.Assert.AreEqual(1, testObj.ReadId2ByPass()); // still one becuase set failed
       context.Assert.AreEqual(true, testObj.IsDirty);
-#else
-      context.Assert.Try(() =>
-        {
-          testObj.LoadId2(2);
-        });
-      
-#endif
-
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
 
@@ -100,7 +98,7 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassReadWriteNoRights()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       bool propertyChangedFired = false;
 
       BypassBusinessBase testObj = new BypassBusinessBase();
@@ -113,7 +111,7 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(false, propertyChangedFired);
       context.Assert.AreEqual(false, testObj.IsDirty);
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
 
@@ -121,7 +119,7 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassReadWriteWithRights()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       bool propertyChangedFired = false;
       BypassBusinessBase testObj = new BypassBusinessBase();
       testObj.PropertyChanged += (o, e) =>
@@ -133,7 +131,7 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(true, propertyChangedFired);
       context.Assert.AreEqual(true, testObj.IsDirty);
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
 
@@ -142,9 +140,8 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassWriteNoRightsDoNotBypass()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       BypassBusinessBase testObj = new BypassBusinessBase();
-#if !SILVERLIGHT
       bool propertyChangedFired = false;
       testObj.PropertyChanged += (o, e) =>
       {
@@ -154,14 +151,8 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(1, testObj.ReadId2ByPass());
       context.Assert.AreEqual(true, propertyChangedFired);
       context.Assert.AreEqual(true, testObj.IsDirty);
-#else
-      context.Assert.Try(() =>
-        {
-          testObj.LoadId2(1);
-        });
-#endif
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
 
@@ -169,7 +160,7 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassReadNoRightsDoNotBypass()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       bool propertyChangedFired = false;
       BypassBusinessBase testObj = new BypassBusinessBase();
       testObj.PropertyChanged += (o, e) =>
@@ -182,7 +173,7 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(0, testObj.ReadId2()); // 0 becuase we cannot read
       context.Assert.AreEqual(false, propertyChangedFired);
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
 
@@ -192,7 +183,7 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassReadWriteNoRightsBackingField()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       bool propertyChangedFired = false;
 
       BypassBusinessBase testObj = new BypassBusinessBase();
@@ -205,7 +196,7 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(1, testObj.ReadId4ByPass());
       context.Assert.AreEqual(false, propertyChangedFired);
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
 
@@ -213,7 +204,7 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassReadWriteWithRightsBackingField()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       bool propertyChangedFired = false;
       BypassBusinessBase testObj = new BypassBusinessBase();
       testObj.PropertyChanged += (o, e) =>
@@ -225,7 +216,7 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(1, testObj.ReadId3());
       context.Assert.AreEqual(true, propertyChangedFired);
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
 
@@ -234,9 +225,8 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassWriteNoRightsDoNotBypassBackingField()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       BypassBusinessBase testObj = new BypassBusinessBase();
-#if !SILVERLIGHT
       bool propertyChangedFired = false;
       testObj.PropertyChanged += (o, e) =>
       {
@@ -246,15 +236,8 @@ namespace Csla.Test.BypassPropertyChecks
        context.Assert.AreEqual(true, testObj.IsDirty);
       context.Assert.AreEqual(1, testObj.ReadId4ByPass());
       context.Assert.AreEqual(true, propertyChangedFired);
-#else
-      context.Assert.Try(() =>
-        {
-          testObj.LoadId2(1);
-        });
-#endif
-     
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
 
@@ -262,7 +245,7 @@ namespace Csla.Test.BypassPropertyChecks
     public void TestBypassReadNoRightsDoNotBypassBackingField()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
       bool propertyChangedFired = false;
       BypassBusinessBase testObj = new BypassBusinessBase();
       testObj.PropertyChanged += (o, e) =>
@@ -275,46 +258,22 @@ namespace Csla.Test.BypassPropertyChecks
       context.Assert.AreEqual(0, testObj.ReadId4()); // 0 becuase we cannot read
       context.Assert.AreEqual(false, propertyChangedFired);
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
-
-#if !SILVERLIGHT
 
     [TestMethod]
     public void TestBypassFactory()
     {
       UnitTestContext context = GetContext();
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
+      Csla.ApplicationContext.User = GetPrincipal("Admin");
 
       BypassBusinessBaseUsingFactory obj = BypassBusinessBaseUsingFactory.GetObject();
       context.Assert.AreEqual(false, obj.IsDirty);
       context.Assert.AreEqual(7, obj.ReadId2ByPass());
       context.Assert.Success();
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
+      Csla.ApplicationContext.User = new ClaimsPrincipal();
       context.Complete();
     }
-
-#else
-    [TestMethod]
-    public void TestBypassFactory()
-    {
-
-      UnitTestContext context = GetContext();
-      Csla.DataPortal.ProxyTypeName = "Local";
-      Csla.Test.Security.TestPrincipal.SimulateLogin();
-
-      BypassBusinessBaseUsingFactory.GetBypassBusinessBaseUsingFactory((o, e) =>
-        {
-          BypassBusinessBaseUsingFactory obj = e.Object;
-          context.Assert.AreEqual(false, obj.IsDirty);
-          context.Assert.AreEqual(7, obj.ReadId2ByPass());
-          context.Assert.Success();
-        });
-      Csla.Test.Security.TestPrincipal.SimulateLogout();
-      context.Complete();
-    }
-    
-#endif
   }
 }

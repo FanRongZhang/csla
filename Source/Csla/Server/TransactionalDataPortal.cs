@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="TransactionalDataPortal.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Implements the server-side Serviced </summary>
 //-----------------------------------------------------------------------
@@ -54,7 +54,7 @@ namespace Csla.Server
       DataPortalResult result;
       using (TransactionScope tr = CreateTransactionScope())
       {
-        var portal = new DataPortalSelector();
+        var portal = new DataPortalBroker();
         result = await portal.Create(objectType, criteria, context, isSync).ConfigureAwait(false);
         tr.Complete();
       }
@@ -63,20 +63,20 @@ namespace Csla.Server
 
     private TransactionScope CreateTransactionScope()
     {
-      return new TransactionScope(TransactionScopeOption.Required, GetTransactionOptions());
+      return new TransactionScope(TransactionScopeOption.Required, GetTransactionOptions(), _transactionalAttribute.AsyncFlowOption);
     }
 
     private TransactionOptions GetTransactionOptions()
     {
       var option = new TransactionOptions
                      {
-                       IsolationLevel = GetIsolaionLevel(_transactionalAttribute.TransactionIsolationLevel),
+                       IsolationLevel = GetIsolationLevel(_transactionalAttribute.TransactionIsolationLevel),
                        Timeout = TimeSpan.FromSeconds(_transactionalAttribute.TimeoutInSeconds)
                      };
       return option;
     }
 
-    private IsolationLevel GetIsolaionLevel(TransactionIsolationLevel transactionIsolationLevel)
+    private IsolationLevel GetIsolationLevel(TransactionIsolationLevel transactionIsolationLevel)
     {
       switch (transactionIsolationLevel)
       {
@@ -116,7 +116,7 @@ namespace Csla.Server
       DataPortalResult result;
       using (TransactionScope tr = CreateTransactionScope())
       {
-        var portal = new DataPortalSelector();
+        var portal = new DataPortalBroker();
         result = await portal.Fetch(objectType, criteria, context, isSync).ConfigureAwait(false);
         tr.Complete();
       }
@@ -143,7 +143,7 @@ namespace Csla.Server
       DataPortalResult result;
       using (TransactionScope tr = CreateTransactionScope())
       {
-        var portal = new DataPortalSelector();
+        var portal = new DataPortalBroker();
         result = await portal.Update(obj, context, isSync).ConfigureAwait(false);
         tr.Complete();
       }
@@ -170,7 +170,7 @@ namespace Csla.Server
       DataPortalResult result;
       using (TransactionScope tr = CreateTransactionScope())
       {
-        var portal = new DataPortalSelector();
+        var portal = new DataPortalBroker();
         result = await portal.Delete(objectType, criteria, context, isSync).ConfigureAwait(false);
         tr.Complete();
       }

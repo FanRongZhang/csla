@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="ISavable.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Specifies that the object can save</summary>
 //-----------------------------------------------------------------------
@@ -16,18 +16,18 @@ namespace Csla.Core
   /// </summary>
   public interface ISavable
   {
-#if !SILVERLIGHT && !NETFX_CORE
+#if !(ANDROID || IOS) && !NETFX_CORE
     /// <summary>
     /// Saves the object to the database.
     /// </summary>
     /// <returns>A new object containing the saved values.</returns>
     object Save();
-		/// <summary>
-		/// Saves the object to the database.
-		/// </summary>
-		/// <returns>A new object containing the saved values.</returns>
-		/// <param name="forceUpdate">true to force the save to be an update.</param>
-		object Save(bool forceUpdate);
+    /// <summary>
+    /// Saves the object to the database.
+    /// </summary>
+    /// <returns>A new object containing the saved values.</returns>
+    /// <param name="forceUpdate">true to force the save to be an update.</param>
+    object Save(bool forceUpdate);
 #endif
     /// <summary>
     /// Saves the object to the database.
@@ -41,9 +41,23 @@ namespace Csla.Core
     /// <param name="forceUpdate">true to force the save to be an update.</param>
     Task<object> SaveAsync(bool forceUpdate);
     /// <summary>
+    /// Saves the object to the database, merging the result into the
+    /// original object graph
+    /// </summary>
+    /// <returns>A new object containing the saved values.</returns>
+    Task SaveAndMergeAsync();
+    /// <summary>
+    /// Saves the object to the database, merging the result into the
+    /// original object graph
+    /// </summary>
+    /// <returns>A new object containing the saved values.</returns>
+    /// <param name="forceUpdate">true to force the save to be an update.</param>
+    Task SaveAndMergeAsync(bool forceUpdate);
+    /// <summary>
     /// Saves the object to the database asynchronously. The saved event will contain
     /// the new object when the save operation completes.
     /// </summary>
+    [Obsolete]
     void BeginSave();
     /// <summary>
     /// Saves the object to the database asynchronously. The saved event will contain
@@ -52,6 +66,7 @@ namespace Csla.Core
     /// <param name="userState">
     /// User state object.
     /// </param>
+    [Obsolete]
     void BeginSave(object userState);
     /// <summary>
     /// INTERNAL CSLA .NET USE ONLY.

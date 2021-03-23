@@ -10,10 +10,18 @@ namespace Csla.Validation.Test
   [TestClass]
   public class ValidationTest
   {
+    private static ClaimsPrincipal GetPrincipal(params string[] roles)
+    {
+      var identity = new ClaimsIdentity();
+      foreach (var item in roles)
+        identity.AddClaim(new Claim(ClaimTypes.Role, item));
+      return new ClaimsPrincipal(identity);
+    }
+
     [TestInitialize]
     public void Initialize()
     {
-      Thread.CurrentPrincipal = new VPrincipal("ProjectManager");
+      Thread.CurrentPrincipal = GetPrincipal("ProjectManager");
     }
 
     [TestCleanup]
@@ -23,6 +31,7 @@ namespace Csla.Validation.Test
     }
 
     [TestMethod]
+    
     public void DateComparisonIsCorrect()
     {
       var project = DataPortal.Create<Project>();
@@ -37,6 +46,7 @@ namespace Csla.Validation.Test
 
 
     [TestMethod]
+    
     public void StringRequiredIsCorrect()
     {
       var project = DataPortal.Create<Project>();

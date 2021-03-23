@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="NullableObject.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -76,9 +76,8 @@ namespace Csla.Test.Nullable
           Csla.DataPortal.Delete<NullableObject>(new Criteria(name));
         }
 
-        private NullableObject()
+        public NullableObject()
         {
-            //prevent direct creation
             AddBusinessRules();
         }
 

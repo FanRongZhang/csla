@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="Root.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -74,11 +74,6 @@ namespace Csla.Test.Basic
     public static void DeleteRoot(string data)
     {
       Csla.DataPortal.Delete<Root>(new Criteria(data));
-    }
-
-    private Root()
-    {
-      //prevent direct creation
     }
 
     private void DataPortal_Create(object criteria)

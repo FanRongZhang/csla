@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="CriteriaRequest.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Message sent to the server</summary>
 //-----------------------------------------------------------------------
@@ -11,13 +11,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Csla;
-using Csla.Serialization;
 
 namespace Csla.Server.Hosts.HttpChannel
 {
   /// <summary>
-  /// Message sent to the Silverlight
-  /// WCF data portal.
+  /// Message sent to the WCF data portal.
   /// </summary>
   [Serializable]
   public class CriteriaRequest : ReadOnlyBase<CriteriaRequest>

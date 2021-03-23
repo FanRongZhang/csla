@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="BindableBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This class implements INotifyPropertyChanged</summary>
 //-----------------------------------------------------------------------
@@ -16,19 +16,16 @@ namespace Csla.Core
   /// serialization-safe manner.
   /// </summary>
   [Serializable()]
-  public abstract class BindableBase : MobileObject, 
-    System.ComponentModel.INotifyPropertyChanged, 
-    System.ComponentModel.INotifyPropertyChanging
+  public abstract class BindableBase : 
+    MobileObject, 
+    INotifyPropertyChanged, 
+    INotifyPropertyChanging
   {
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
     protected BindableBase()
-    {
-
-    }
-
-    #region INotifyPropertyChanged
+    { }
 
     [NonSerialized()]
     private PropertyChangedEventHandler _nonSerializableChangedHandlers;
@@ -43,9 +40,7 @@ namespace Csla.Core
     {
       add
       {
-        if (value.Method.IsPublic && 
-           (value.Method.DeclaringType.IsSerializable || 
-            value.Method.IsStatic))
+        if (ShouldHandlerSerialize(value))
           _serializableChangedHandlers = (PropertyChangedEventHandler)
             System.Delegate.Combine(_serializableChangedHandlers, value);
         else
@@ -54,15 +49,84 @@ namespace Csla.Core
       }
       remove
       {
-        if (value.Method.IsPublic && 
-           (value.Method.DeclaringType.IsSerializable || 
-            value.Method.IsStatic))
+          if (ShouldHandlerSerialize(value))
           _serializableChangedHandlers = (PropertyChangedEventHandler)
             System.Delegate.Remove(_serializableChangedHandlers, value);
         else
           _nonSerializableChangedHandlers = (PropertyChangedEventHandler)
             System.Delegate.Remove(_nonSerializableChangedHandlers, value);
       }
+    }
+
+    /// <summary>
+    /// Override this method to change the default logic for determining 
+    /// if the event handler should be serialized
+    /// </summary>
+    /// <param name="value">the event handler to review</param>
+    /// <returns></returns>
+    protected virtual bool ShouldHandlerSerialize(PropertyChangedEventHandler value)
+    {
+      return value.Method.IsPublic &&
+             value.Method.DeclaringType != null &&
+             (value.Method.DeclaringType.IsSerializable || value.Method.IsStatic);
+    }
+
+    /// <summary>
+    /// Call this method to raise the PropertyChanged event
+    /// for a specific property.
+    /// </summary>
+    /// <param name="propertyName">Name of the property that
+    /// has changed.</param>
+    /// <remarks>
+    /// This method may be called by properties in the business
+    /// class to indicate the change in a specific property.
+    /// </remarks>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
+    protected virtual void OnPropertyChanged(string propertyName)
+    {
+      if (_nonSerializableChangedHandlers != null)
+        _nonSerializableChangedHandlers.Invoke(this,
+          new PropertyChangedEventArgs(propertyName));
+      if (_serializableChangedHandlers != null)
+        _serializableChangedHandlers.Invoke(this,
+          new PropertyChangedEventArgs(propertyName));
+    }
+
+        /// <summary>
+    /// Call this method to raise the PropertyChanged event
+    /// for a MetaData (IsXYZ) property
+    /// </summary>
+    /// <param name="propertyName">Name of the property that
+    /// has changed.</param>
+    /// <remarks>
+    /// This method may be called by properties in the business
+    /// class to indicate the change in a specific property.
+    /// </remarks>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
+    protected virtual void OnMetaPropertyChanged(string propertyName)
+    {
+      if (_nonSerializableChangedHandlers != null)
+        _nonSerializableChangedHandlers.Invoke(this,
+          new MetaPropertyChangedEventArgs(propertyName));
+      if (_serializableChangedHandlers != null)
+        _serializableChangedHandlers.Invoke(this,
+          new MetaPropertyChangedEventArgs(propertyName));
+    }
+
+    /// <summary>
+    /// Call this method to raise the PropertyChanged event
+    /// for a specific property.
+    /// </summary>
+    /// <param name="propertyInfo">PropertyInfo of the property that
+    /// has changed.</param>
+    /// <remarks>
+    /// This method may be called by properties in the business
+    /// class to indicate the change in a specific property.
+    /// </remarks>
+    [EditorBrowsable(EditorBrowsableState.Advanced)]
+    protected virtual void OnPropertyChanged(IPropertyInfo propertyInfo)
+    {
+      OnPropertyChanged(propertyInfo.Name);
     }
 
     /// <summary>
@@ -94,47 +158,6 @@ namespace Csla.Core
       OnPropertyChanged(string.Empty);
     }
 
-    /// <summary>
-    /// Call this method to raise the PropertyChanged event
-    /// for a specific property.
-    /// </summary>
-    /// <param name="propertyName">Name of the property that
-    /// has changed.</param>
-    /// <remarks>
-    /// This method may be called by properties in the business
-  /// class to indicate the change in a specific property.
-    /// </remarks>
-    [EditorBrowsable(EditorBrowsableState.Advanced)]
-    protected virtual void OnPropertyChanged(string propertyName)
-    {
-      if (_nonSerializableChangedHandlers != null)
-        _nonSerializableChangedHandlers.Invoke(this,
-          new PropertyChangedEventArgs(propertyName));
-      if (_serializableChangedHandlers != null)
-        _serializableChangedHandlers.Invoke(this,
-          new PropertyChangedEventArgs(propertyName));
-    }
-
-    /// <summary>
-    /// Call this method to raise the PropertyChanged event
-    /// for a specific property.
-    /// </summary>
-    /// <param name="propertyInfo">PropertyInfo of the property that
-    /// has changed.</param>
-    /// <remarks>
-    /// This method may be called by properties in the business
-    /// class to indicate the change in a specific property.
-    /// </remarks>
-    [EditorBrowsable(EditorBrowsableState.Advanced)]
-    protected virtual void OnPropertyChanged(IPropertyInfo propertyInfo)
-    {
-      OnPropertyChanged(propertyInfo.Name);
-    }
-
-    #endregion
-
-    #region INotifyPropertyChanging
-
     [NonSerialized()]
     private PropertyChangingEventHandler _nonSerializableChangingHandlers;
     private PropertyChangingEventHandler _serializableChangingHandlers;
@@ -148,9 +171,7 @@ namespace Csla.Core
     {
       add
       {
-        if (value.Method.IsPublic &&
-           (value.Method.DeclaringType.IsSerializable ||
-            value.Method.IsStatic))
+          if (ShouldHandlerSerialize(value))
           _serializableChangingHandlers = (PropertyChangingEventHandler)
             System.Delegate.Combine(_serializableChangingHandlers, value);
         else
@@ -159,9 +180,7 @@ namespace Csla.Core
       }
       remove
       {
-        if (value.Method.IsPublic &&
-           (value.Method.DeclaringType.IsSerializable ||
-            value.Method.IsStatic))
+          if (ShouldHandlerSerialize(value))
           _serializableChangingHandlers = (PropertyChangingEventHandler)
             System.Delegate.Remove(_serializableChangingHandlers, value);
         else
@@ -236,6 +255,17 @@ namespace Csla.Core
       OnPropertyChanging(propertyInfo.Name);
     }
 
-    #endregion
+    /// <summary>
+    /// Override this method to change the default logic for determining 
+    /// if the event handler should be serialized
+    /// </summary>
+    /// <param name="value">the event handler to review</param>
+    /// <returns></returns>
+    protected virtual bool ShouldHandlerSerialize(PropertyChangingEventHandler value)
+    {
+      return value.Method.IsPublic &&
+             value.Method.DeclaringType != null &&
+             (value.Method.DeclaringType.IsSerializable || value.Method.IsStatic);
+    }
   }
 }

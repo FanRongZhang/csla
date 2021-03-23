@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="BasicTests.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -326,7 +326,7 @@ namespace Csla.Test.Basic
 
           Root copy = root.Clone();
 
-          List<Child> deleted = (List<Child>)(root.Children.GetType().GetProperty("DeletedList", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.FlattenHierarchy | System.Reflection.BindingFlags.IgnoreCase).GetValue(copy.Children, null));
+          var deleted = (List<Child>)(root.Children.GetType().GetProperty("DeletedList", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.FlattenHierarchy | System.Reflection.BindingFlags.IgnoreCase).GetValue(copy.Children, null));
 
           Assert.AreEqual(2, deleted.Count);
           Assert.AreEqual("1", deleted[0].Data);

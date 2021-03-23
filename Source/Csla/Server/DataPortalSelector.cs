@@ -1,14 +1,12 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="DataPortalSelector.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Selects the appropriate data portal implementation</summary>
 //-----------------------------------------------------------------------
 using System;
-#if !NETFX_CORE
-using System.Configuration;
-#endif
+using Csla.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

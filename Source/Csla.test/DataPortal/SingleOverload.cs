@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="SingleOverload.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -45,9 +45,6 @@ namespace Csla.Test.DataPortalTest
     {
       Csla.DataPortal.Delete<SingleOverload>(new Criteria(id));
     }
-
-    private SingleOverload()
-    { /* Require use of factory methods */ }
 
     #endregion
 

@@ -1,17 +1,12 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="PrimitiveCriteriaSingle.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
 using System.Collections.Generic;
 using System.Text;
-#if SILVERLIGHT
-using Csla.Serialization;
-#else
-
-#endif
 
 using Csla;
 using System;
@@ -27,14 +22,14 @@ namespace Csla.Test.DataPortalTest
   {
     #region Business Methods
 
-    private static PropertyInfo<int> IdProperty = RegisterProperty(new PropertyInfo<int>("Id", "Id"));
+    public static readonly PropertyInfo<int> IdProperty = RegisterProperty<int>(c => c.Id);
     public int Id
     {
       get { return GetProperty(IdProperty); }
       set { SetProperty(IdProperty, value); }
     }
 
-    private static PropertyInfo<string> MethodCalledProperty = RegisterProperty(new PropertyInfo<string>("MethodCalled", "MethodCalled"));
+    private static PropertyInfo<string> MethodCalledProperty = RegisterProperty<string>(c => c.MethodCalled);
     public string MethodCalled
     {
       get { return GetProperty(MethodCalledProperty); }
@@ -48,35 +43,10 @@ namespace Csla.Test.DataPortalTest
 
     #endregion
 
-
-    #region Factory Methods
-
-
-
-    public static void DeleteObject(int id, EventHandler<DataPortalResult<PrimitiveCriteriaSingle>> handler)
-    {
-      Csla.DataPortal.BeginDelete<PrimitiveCriteriaSingle>(id, handler);
-    }
-
-    public static void GetObject(int id, EventHandler<DataPortalResult<PrimitiveCriteriaSingle>> handler)
-    {
-      Csla.DataPortal.BeginFetch<PrimitiveCriteriaSingle>(id, handler);
-    }
-
-    public static void NewObject(int id, EventHandler<DataPortalResult<PrimitiveCriteriaSingle>> handler)
-    {
-      Csla.DataPortal.BeginCreate<PrimitiveCriteriaSingle>(id, handler);
-    }
-
     public PrimitiveCriteriaSingle()
-    { /* Require use of factory methods */ }
-
-    #endregion
+    { }
 
     #region Data Access
-
-
-#if !SILVERLIGHT
 
     #region DataPortal_Create
 
@@ -88,8 +58,10 @@ namespace Csla.Test.DataPortalTest
     private void DoCreate(int id)
     {
       Id = id;
+#pragma warning disable CS0618 // Type or member is obsolete
       ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("PrimitiveCriteriaSingle", "Created");
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = "Created";
       if (id == 9999)
         throw new Exception("Bad data");
@@ -118,8 +90,10 @@ namespace Csla.Test.DataPortalTest
     private void DoFetch(int id)
     {
       Id = id;
+#pragma warning disable CS0618 // Type or member is obsolete
       ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("PrimitiveCriteriaSingle", "Fetched");
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = "Fetched";
       if (id == 9999)
         throw new Exception("Bad data");
@@ -138,8 +112,10 @@ namespace Csla.Test.DataPortalTest
     {
       var insertOrUpdate = isUpdate ? "Updated" : "Inserted";
 
+#pragma warning disable CS0618 // Type or member is obsolete
       ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("PrimitiveCriteriaSingle", insertOrUpdate);
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = insertOrUpdate;
     }
 
@@ -150,14 +126,12 @@ namespace Csla.Test.DataPortalTest
 
     private void DataPortal_Delete(int id)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
       ApplicationContext.GlobalContext.Clear();
       ApplicationContext.GlobalContext.Add("PrimitiveCriteriaSingle", "Deleted");
+#pragma warning restore CS0618 // Type or member is obsolete
       MethodCalled = "Deleted+" + id.ToString();
     }
-#endif
-
-
-
 
     #endregion
   }

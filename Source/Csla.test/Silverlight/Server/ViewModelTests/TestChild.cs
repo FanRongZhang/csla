@@ -9,8 +9,6 @@ namespace cslalighttest.ViewModelTests
   {
     #region Business Methods
 
-    // TODO: add your own fields, properties and methods
-
     // example with private backing field
     public static readonly PropertyInfo<int> IdProperty = RegisterProperty<int>(p => p.Id);
     private int _Id = IdProperty.DefaultValue;
@@ -42,18 +40,13 @@ namespace cslalighttest.ViewModelTests
       return Csla.DataPortal.FetchChild<TestChild>(childData);
     }
 
-    public TestChild()
-    { /* Require use of factory methods */ }
-
     #endregion
 
-#if !SILVERLIGHT
     #region Data Access
 
     [RunLocal]
     protected override void Child_Create()
     {
-      // TODO: load default values
       // omit this override if you have no defaults to set
       base.Child_Create();
     }
@@ -61,28 +54,23 @@ namespace cslalighttest.ViewModelTests
     [RunLocal]
     private void Child_Fetch(object childData)
     {
-      // TODO: load values
     }
 
     [RunLocal]
     private void Child_Insert(object parent)
     {
-      // TODO: insert values
     }
 
     [RunLocal]
     private void Child_Update(object parent)
     {
-      // TODO: update values
     }
 
     [RunLocal]
     private void Child_DeleteSelf(object parent)
     {
-      // TODO: delete values
     }
 
     #endregion
-#endif
   }
 }

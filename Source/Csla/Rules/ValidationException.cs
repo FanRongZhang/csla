@@ -1,12 +1,11 @@
 //-----------------------------------------------------------------------
 // <copyright file="ValidationException.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Exception class indicating that there was a validation</summary>
 //-----------------------------------------------------------------------
 using System;
-using Csla.Serialization;
 
 namespace Csla.Rules
 {
@@ -48,7 +47,7 @@ namespace Csla.Rules
 
     }
 
-#if !SILVERLIGHT && !NETFX_CORE
+#if !(ANDROID || IOS) && !NETFX_CORE
     /// <summary>
     /// Creates an instance of the object for serialization.
     /// </summary>

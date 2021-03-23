@@ -1,7 +1,8 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETFX_CORE
+//-----------------------------------------------------------------------
 // <copyright file="WcfResponse.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Response message returned from the </summary>
 //-----------------------------------------------------------------------
@@ -12,7 +13,7 @@ namespace Csla.Server.Hosts.Mobile
 {
   /// <summary>
   /// Response message returned from the 
-  /// Silverlight WCF data portal methods.
+  /// WCF data portal methods.
   /// </summary>
   [DataContract]
   public class WcfResponse
@@ -34,3 +35,4 @@ namespace Csla.Server.Hosts.Mobile
     public byte[] GlobalContext { get; set; }
   }
 }
+#endif

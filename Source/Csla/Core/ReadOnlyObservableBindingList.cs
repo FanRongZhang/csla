@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="ReadOnlyObservableBindingList.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>A readonly version of ObservableBindingList.</summary>
 //-----------------------------------------------------------------------
@@ -11,7 +11,6 @@ using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using Csla.Properties;
-using Csla.Serialization;
 
 namespace Csla.Core
 {
@@ -72,17 +71,23 @@ namespace Csla.Core
     public bool IsReadOnly
     {
       get { return _isReadOnly; }
-#if !IOS
       protected set { _isReadOnly = value; }
-#else
-      set { _isReadOnly = value; }
-#endif
     }
 
     bool Core.IReadOnlyBindingList.IsReadOnly
     {
       get { return IsReadOnly; }
       set { IsReadOnly = value; }
+    }
+
+    /// <summary>
+    /// Sets the LoadListMode for the collection
+    /// </summary>
+    /// <param name="enabled">Enable or disable mode</param>
+    protected override void SetLoadListMode(bool enabled)
+    {
+      IsReadOnly = !enabled;
+      base.SetLoadListMode(enabled);
     }
 
     #endregion

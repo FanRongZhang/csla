@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="AppDomainProxy.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This is a test proxy used to test any type of calls that have to</summary>
 //-----------------------------------------------------------------------
@@ -177,9 +177,6 @@ namespace Csla.Testing.Business.TestProxies
 
     public async Task<DataPortalResult> Update(object obj, DataPortalContext context, bool isSync)
     {
-      //Security.BusinessPrincipal
-      //var temp = new DataPortalContext(new UnauthenticatedPrincipal(), context.IsRemotePortal);
-
       var task = 
         new UpdateTask
           {

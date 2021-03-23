@@ -1,7 +1,8 @@
-﻿//-----------------------------------------------------------------------
+﻿#if !NETFX_PHONE && !NETCORE && !NETSTANDARD2_0 && !NET5_0
+//-----------------------------------------------------------------------
 // <copyright file="ServiceClientManager.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Provides an automated way to reuse </summary>
 //-----------------------------------------------------------------------
@@ -39,12 +40,8 @@ namespace Csla.Data
 
       lock (_lock)
       {
-        ServiceClientManager<C, T> mgr = null;
-        if (ApplicationContext.LocalContext.Contains(name))
-        {
-          mgr = (ServiceClientManager<C, T>)(ApplicationContext.LocalContext[name]);
-        }
-        else
+        ServiceClientManager<C, T> mgr = (ServiceClientManager<C, T>)ApplicationContext.LocalContext.GetValueOrNull(name);
+        if (mgr == null)
         {
           mgr = new ServiceClientManager<C, T>(name);
           ApplicationContext.LocalContext[name] = mgr;
@@ -56,7 +53,7 @@ namespace Csla.Data
 
     private ServiceClientManager(string name)
     {
-      _client = (C)(Activator.CreateInstance(typeof(C)));
+      _client = (C)(Reflection.MethodCaller.CreateInstance(typeof(C)));
     }
 
     /// <summary>
@@ -71,3 +68,4 @@ namespace Csla.Data
     }
   }
 }
+#endif

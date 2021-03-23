@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="AuthorizeRequest.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Object containing information about the</summary>
 //-----------------------------------------------------------------------
@@ -50,9 +50,24 @@ namespace Csla.Server
     /// not have permission to carry out this operation.</exception>
     public void CheckPermissions()
     {
+      if (Operation == DataPortalOperations.Update || 
+          Operation == DataPortalOperations.Execute)
+      { 
+         // Per-Instance checks
+         if (!BusinessRules.HasPermission(Operation.ToAuthAction(), RequestObject))
+         {
+            throw new SecurityException(
+               string.Format(Resources.UserNotAuthorizedException,
+                   Operation.ToSecurityActionDescription(),
+                   ObjectType.Name)
+               );
+         }
+      }
+
+      // Per-Type checks
       if (!BusinessRules.HasPermission(Operation.ToAuthAction(), ObjectType))
       {
-        throw new SecurityException(
+         throw new SecurityException(
             string.Format(Resources.UserNotAuthorizedException,
                 Operation.ToSecurityActionDescription(),
                 ObjectType.Name)

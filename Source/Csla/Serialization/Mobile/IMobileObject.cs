@@ -1,18 +1,16 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="IMobileObject.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Interface to be implemented by any object</summary>
 //-----------------------------------------------------------------------
-using System;
-
 namespace Csla.Serialization.Mobile
 {
   /// <summary>
   /// Interface to be implemented by any object
   /// that supports serialization by the
-  /// MobileFormatter.
+  /// SerializationFormatterFactory.GetFormatter().
   /// </summary>
   public interface IMobileObject
   {

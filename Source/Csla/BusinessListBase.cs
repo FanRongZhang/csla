@@ -1,14 +1,13 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="BusinessListBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This is the base class from which most business collections</summary>
 //-----------------------------------------------------------------------
 using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using Csla.Serialization;
 using Csla.Core;
 using Csla.Properties;
 using System.Collections.Generic;
@@ -32,11 +31,7 @@ namespace Csla
 #endif
   [Serializable]
   public abstract class BusinessListBase<T, C> :
-#if SILVERLIGHT || NETFX_CORE
-      ExtendedBindingList<C>,
-#else
       ObservableBindingList<C>,
-#endif
       IEditableCollection, Core.IUndoableObject, ICloneable,
       ISavable, Core.ISavable<T>, Core.IParent,  Server.IDataPortalTarget,
       INotifyBusy,
@@ -49,6 +44,7 @@ namespace Csla
     /// </summary>
     protected BusinessListBase()
     {
+      InitializeIdentity();
       Initialize();
       AllowNew = true;
     }
@@ -62,6 +58,40 @@ namespace Csla
     /// </summary>
     protected virtual void Initialize()
     { /* allows subclass to initialize events before any other activity occurs */ }
+
+    #endregion
+
+    #region Identity
+
+    private int _identity = -1;
+
+    int IBusinessObject.Identity
+    {
+      get { return _identity; }
+    }
+
+    private void InitializeIdentity()
+    {
+      _identity = ((IParent)this).GetNextIdentity(_identity);
+    }
+
+    [NonSerialized]
+    [NotUndoable]
+    private IdentityManager _identityManager;
+
+    int IParent.GetNextIdentity(int current)
+    {
+      if (this.Parent != null)
+      {
+        return this.Parent.GetNextIdentity(current);
+      }
+      else
+      {
+        if (_identityManager == null)
+          _identityManager = new IdentityManager();
+        return _identityManager.GetNextIdentity(current);
+      }
+    }
 
     #endregion
 
@@ -141,7 +171,7 @@ namespace Csla
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> if the internal deleted list
+    /// Returns true if the internal deleted list
     /// contains the specified child object.
     /// </summary>
     /// <param name="item">Child object to check.</param>
@@ -252,18 +282,6 @@ namespace Csla
 
     #region Insert, Remove, Clear
 
-#if SILVERLIGHT || NETFX_CORE
-    /// <summary>
-    /// Override this method to create a new object that is added
-    /// to the collection. 
-    /// </summary>
-    protected override void  AddNewCore()
-    {
-      var item = DataPortal.CreateChild<C>();
-      Add(item);
-      OnAddedNew(item);
-    }
-#else
     /// <summary>
     /// Override this method to create a new object that is added
     /// to the collection. 
@@ -274,7 +292,6 @@ namespace Csla
       Add(item);
       return item;
     }
-#endif
 
     /// <summary>
     /// This method is called by a child object when it
@@ -337,15 +354,9 @@ namespace Csla
       // when an object is 'removed' it is really
       // being deleted, so do the deletion work
       C child = this[index];
-      bool oldRaiseListChangedEvents = this.RaiseListChangedEvents;
-      try
+      using (LoadListMode)
       {
-        this.RaiseListChangedEvents = false;
         base.RemoveItem(index);
-      }
-      finally
-      {
-        this.RaiseListChangedEvents = oldRaiseListChangedEvents;
       }
       if (!_completelyRemoveChild)
       {
@@ -375,17 +386,10 @@ namespace Csla
         child = this[index];
       // replace the original object with this new
       // object
-      bool oldRaiseListChangedEvents = this.RaiseListChangedEvents;
-      try
+      using (LoadListMode)
       {
-        this.RaiseListChangedEvents = false;
-
         if (child != null)
           DeleteChild(child);
-      }
-      finally
-      {
-        this.RaiseListChangedEvents = oldRaiseListChangedEvents;
       }
 
       // set parent reference
@@ -461,18 +465,10 @@ namespace Csla
     private void CopyState(int parentEditLevel)
     {
       if (this.EditLevel + 1 > parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "CopyState"));
+        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "CopyState"), this.GetType().Name, _parent != null ? _parent.GetType().Name : null, this.EditLevel, parentEditLevel - 1);
 
       // we are going a level deeper in editing
       _editLevel += 1;
-
-      // JMC 6/24/08
-      // This used to be a foreach loop but there appears to be a bug
-      // in the silverlight runtime (SL2 B2) since calling foreach here will result
-      // in SEHException with the error code -2147467259, or Error Unkown.
-      // Iterating on this collection outside of this call will result in
-      // behavior as expected but for some reason doing it here results in
-      // an unknown exception.
 
       // cascade the call to all child objects
       for (int x = 0; x < this.Count; x++)
@@ -493,84 +489,83 @@ namespace Csla
       C child;
 
       if (this.EditLevel - 1 != parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "UndoChanges"));
+        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "UndoChanges"), this.GetType().Name, _parent != null ? _parent.GetType().Name : null, this.EditLevel, parentEditLevel + 1);
 
       // we are coming up one edit level
       _editLevel -= 1;
       if (_editLevel < 0) _editLevel = 0;
 
-      bool oldRLCE = this.RaiseListChangedEvents;
-      this.RaiseListChangedEvents = false;
-      try
+      using (LoadListMode)
       {
-        // Cancel edit on all current items
-        for (int index = Count - 1; index >= 0; index--)
+        try
         {
-          child = this[index];
-
-          //ACE: Important, make sure to remove the item prior to
-          //     it going through undo, otherwise, it will
-          //     incur a more expensive RemoveByReference operation
-          //DeferredLoadIndexIfNotLoaded();
-          //_indexSet.RemoveItem(child);
-
-          child.UndoChanges(_editLevel, false);
-
-          //ACE: Now that we have undone the changes, we can add the item
-          //     back in the index.
-          //_indexSet.InsertItem(child);
-
-          // if item is below its point of addition, remove
-          if (child.EditLevelAdded > _editLevel)
+          // Cancel edit on all current items
+          for (int index = Count - 1; index >= 0; index--)
           {
-            bool oldAllowRemove = this.AllowRemove;
-            try
-            {
-              this.AllowRemove = true;
-              _completelyRemoveChild = true;
-              //RemoveIndexItem(child);
-              RemoveAt(index);
-            }
-            finally
-            {
-              _completelyRemoveChild = false;
-              this.AllowRemove = oldAllowRemove;
-            }
-          }
-        }
+            child = this[index];
 
-        // cancel edit on all deleted items
-        for (int index = DeletedList.Count - 1; index >= 0; index--)
-        {
-          child = DeletedList[index];
-          child.UndoChanges(_editLevel, false);
-          if (child.EditLevelAdded > _editLevel)
-          {
+            //ACE: Important, make sure to remove the item prior to
+            //     it going through undo, otherwise, it will
+            //     incur a more expensive RemoveByReference operation
+            //DeferredLoadIndexIfNotLoaded();
+            //_indexSet.RemoveItem(child);
+
+            child.UndoChanges(_editLevel, false);
+
+            //ACE: Now that we have undone the changes, we can add the item
+            //     back in the index.
+            //_indexSet.InsertItem(child);
+
             // if item is below its point of addition, remove
-            DeletedList.RemoveAt(index);
+            if (child.EditLevelAdded > _editLevel)
+            {
+              bool oldAllowRemove = this.AllowRemove;
+              try
+              {
+                this.AllowRemove = true;
+                _completelyRemoveChild = true;
+                //RemoveIndexItem(child);
+                RemoveAt(index);
+              }
+              finally
+              {
+                _completelyRemoveChild = false;
+                this.AllowRemove = oldAllowRemove;
+              }
+            }
           }
-          else
+
+          // cancel edit on all deleted items
+          for (int index = DeletedList.Count - 1; index >= 0; index--)
           {
-            // if item is no longer deleted move back to main list
-            if (!child.IsDeleted) UnDeleteChild(child);
+            child = DeletedList[index];
+            child.UndoChanges(_editLevel, false);
+            if (child.EditLevelAdded > _editLevel)
+            {
+              // if item is below its point of addition, remove
+              DeletedList.RemoveAt(index);
+            }
+            else
+            {
+              // if item is no longer deleted move back to main list
+              if (!child.IsDeleted) UnDeleteChild(child);
+            }
           }
         }
-      }
-      finally
-      {
-        this.RaiseListChangedEvents = oldRLCE;
-        OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        finally
+        {
+          OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
       }
     }
 
     private void AcceptChanges(int parentEditLevel)
     {
       if (this.EditLevel - 1 != parentEditLevel)
-        throw new Core.UndoException(string.Format(Resources.EditLevelMismatchException, "AcceptChanges"));
+        throw new UndoException(string.Format(Resources.EditLevelMismatchException, "AcceptChanges"), this.GetType().Name, _parent != null ? _parent.GetType().Name : null, this.EditLevel, parentEditLevel + 1);
 
       // we are coming up one edit level
       _editLevel -= 1;
-      if (_editLevel < 0) _editLevel = 0;
 
       // cascade the call to all child objects
       foreach (C child in this)
@@ -589,6 +584,8 @@ namespace Csla
         if (child.EditLevelAdded > _editLevel)
           DeletedList.RemoveAt(index);
       }
+      
+      if (_editLevel < 0) _editLevel = 0;
     }
 
     #endregion
@@ -607,6 +604,7 @@ namespace Csla
     {
       info.AddValue("Csla.BusinessListBase._isChild", _isChild);
       info.AddValue("Csla.BusinessListBase._editLevel", _editLevel);
+      info.AddValue("Csla.Core.BusinessBase._identity", _identity);
       base.OnGetState(info);
     }
 
@@ -622,6 +620,7 @@ namespace Csla
     {
       _isChild = info.GetValue<bool>("Csla.BusinessListBase._isChild");
       _editLevel = info.GetValue<int>("Csla.BusinessListBase._editLevel");
+      _identity = info.GetValue<int>("Csla.Core.BusinessBase._identity");
       base.OnSetState(info);
     }
 
@@ -702,6 +701,7 @@ namespace Csla
     /// </remarks>
     protected void MarkAsChild()
     {
+      _identity = -1;
       _isChild = true;
     }
 
@@ -772,7 +772,7 @@ namespace Csla
     }
 
     /// <summary>
-    /// Returns <see langword="true" /> if this object has changes, is valid,
+    /// Returns true if this object has changes, is valid,
     /// the user is authorized and the object is not busy.
     /// </summary>
     public virtual bool IsSavable
@@ -868,9 +868,7 @@ namespace Csla
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     protected virtual void Child_Update(params object[] parameters)
     {
-      var oldRLCE = this.RaiseListChangedEvents;
-      this.RaiseListChangedEvents = false;
-      try
+      using (LoadListMode)
       {
         foreach (var child in DeletedList)
           DataPortal.UpdateChild(child, parameters);
@@ -879,17 +877,12 @@ namespace Csla
         foreach (var child in this)
           if (child.IsDirty) DataPortal.UpdateChild(child, parameters);
       }
-      finally
-      {
-        this.RaiseListChangedEvents = oldRLCE;
-      }
     }
 
     #endregion
 
     #region Data Access
 
-#if !SILVERLIGHT && !NETFX_CORE
     /// <summary>
     /// Saves the object to the database.
     /// </summary>
@@ -900,9 +893,9 @@ namespace Csla
     /// each object's current state.
     /// </para><para>
     /// All this is contingent on <see cref="IsDirty" />. If
-    /// this value is <see langword="false"/>, no data operation occurs. 
+    /// this value is false, no data operation occurs. 
     /// It is also contingent on <see cref="IsValid" />. If this value is 
-    /// <see langword="false"/> an exception will be thrown to 
+    /// false an exception will be thrown to 
     /// indicate that the UI attempted to save an invalid object.
     /// </para><para>
     /// It is important to note that this method returns a new version of the
@@ -931,7 +924,6 @@ namespace Csla
           throw;
       }
     }
-#endif
 
     /// <summary>
     /// Saves the object to the database.
@@ -981,8 +973,19 @@ namespace Csla
     }
 
     /// <summary>
+    /// Saves the object to the database, merging
+    /// any resulting updates into the existing
+    /// object graph.
+    /// </summary>
+    public async Task SaveAndMergeAsync()
+    {
+      new GraphMerger().MergeBusinessListGraph<T, C>((T)this, await SaveAsync());
+    }
+
+    /// <summary>
     /// Starts an async operation to save the object to the database.
     /// </summary>
+    [Obsolete]
     public void BeginSave()
     {
       BeginSave(null, null);
@@ -992,6 +995,7 @@ namespace Csla
     /// Starts an async operation to save the object to the database.
     /// </summary>
     /// <param name="userState">User state object.</param>
+    [Obsolete]
     public void BeginSave(object userState)
     {
       BeginSave(null, userState);
@@ -1003,6 +1007,7 @@ namespace Csla
     /// <param name="handler">
     /// Method called when the operation is complete.
     /// </param>
+    [Obsolete]
     public void BeginSave(EventHandler<SavedEventArgs> handler)
     {
       BeginSave(handler, null);
@@ -1015,6 +1020,7 @@ namespace Csla
     /// Method called when the operation is complete.
     /// </param>
     /// <param name="userState">User state object.</param>
+    [Obsolete]
     public async void BeginSave(EventHandler<SavedEventArgs> handler, object userState)
     {
       Exception error = null;
@@ -1114,7 +1120,6 @@ namespace Csla
 
     #region ISavable Members
 
-#if !SILVERLIGHT && !NETFX_CORE
     object Csla.Core.ISavable.Save()
     {
       return Save();
@@ -1124,7 +1129,6 @@ namespace Csla
     {
       return Save();
     }
-#endif
 
     async Task<object> ISavable.SaveAsync()
     {
@@ -1136,6 +1140,12 @@ namespace Csla
       return await SaveAsync();
     }
 
+    async Task ISavable.SaveAndMergeAsync(bool forceUpdate)
+    {
+      await SaveAndMergeAsync();
+    }
+
+    [Obsolete]
     void ISavable.BeginSave()
     {
       BeginSave();
@@ -1146,16 +1156,19 @@ namespace Csla
       OnSaved((T)newObject, null, null);
     }
 
-#if !SILVERLIGHT && !NETFX_CORE
     T Csla.Core.ISavable<T>.Save(bool forceUpdate)
     {
       return Save();
     }
-#endif
 
     async Task<T> ISavable<T>.SaveAsync(bool forceUpdate)
     {
       return await SaveAsync();
+    }
+
+    async Task ISavable<T>.SaveAndMergeAsync(bool forceUpdate)
+    {
+      await SaveAndMergeAsync();
     }
 
     void Csla.Core.ISavable<T>.SaveComplete(T newObject)
@@ -1217,6 +1230,7 @@ namespace Csla
     /// </remarks>
     [Browsable(false)]
     [Display(AutoGenerateField=false)]
+    [System.ComponentModel.DataAnnotations.ScaffoldColumn(false)]
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public Core.IParent Parent
     {
@@ -1235,6 +1249,8 @@ namespace Csla
     protected virtual void SetParent(Core.IParent parent)
     {
       _parent = parent;
+      _identityManager = null;
+      InitializeIdentity();
     }
 
     /// <summary>

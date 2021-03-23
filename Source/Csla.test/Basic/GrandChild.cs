@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------
 // <copyright file="GrandChild.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>no summary</summary>
 //-----------------------------------------------------------------------
@@ -49,9 +49,8 @@ namespace Csla.Test.Basic
             return obj;
         }
 
-        private GrandChild()
+        public GrandChild()
         {
-            //prevent direct creation
             MarkAsChild();
         }
 

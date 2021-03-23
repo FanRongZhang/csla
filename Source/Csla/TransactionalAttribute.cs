@@ -1,11 +1,13 @@
 //-----------------------------------------------------------------------
 // <copyright file="TransactionalAttribute.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Marks a DataPortal_XYZ method to run within</summary>
 //-----------------------------------------------------------------------
 using System;
+using System.Transactions;
+
 namespace Csla
 {
   /// <summary>
@@ -56,8 +58,12 @@ namespace Csla
     public TransactionalAttribute(TransactionalTypes transactionType)
     {
       TransactionType = transactionType;
+#if NETSTANDARD2_0 || NET5_0
+      if (transactionType == TransactionalTypes.TransactionScope)
+#else
       if (transactionType == TransactionalTypes.TransactionScope || 
         transactionType == TransactionalTypes.EnterpriseServices)
+#endif
       {
         TransactionIsolationLevel = ApplicationContext.DefaultTransactionIsolationLevel;
         TimeoutInSeconds = ApplicationContext.DefaultTransactionTimeoutInSeconds;
@@ -107,11 +113,50 @@ namespace Csla
     {
       TransactionType = transactionType;
       TransactionIsolationLevel = transactionIsolationLevel;
+#if NETSTANDARD2_0 || NET5_0
+      if (transactionType == TransactionalTypes.TransactionScope)
+#else
       if (transactionType == TransactionalTypes.TransactionScope ||
         transactionType == TransactionalTypes.EnterpriseServices)
+#endif
       {
         TimeoutInSeconds = ApplicationContext.DefaultTransactionTimeoutInSeconds;
       }
+    }
+
+    /// <summary>
+    /// Marks a method to run within the specified
+    /// type of transactional context.
+    /// </summary>
+    /// <param name="transactionType">
+    /// Specifies the transactional context within which the
+    /// method should run.</param>
+    /// <param name="transactionIsolationLevel">
+    /// Specifies override for transaction isolation level.
+    /// Default can be specified in .config file via CslaTransactionIsolationLevel setting
+    /// If none specified, Serializable level is used
+    /// </param>
+    /// <param name="asyncFlowOption">
+    /// Specifies the async flow option used to initialize
+    /// the transaction.
+    /// </param>
+    public TransactionalAttribute(
+      TransactionalTypes transactionType,
+      TransactionIsolationLevel transactionIsolationLevel,
+      TransactionScopeAsyncFlowOption asyncFlowOption)
+    {
+      TransactionType = transactionType;
+      TransactionIsolationLevel = transactionIsolationLevel;
+#if NETSTANDARD2_0 || NET5_0
+      if (transactionType == TransactionalTypes.TransactionScope)
+#else
+      if (transactionType == TransactionalTypes.TransactionScope ||
+        transactionType == TransactionalTypes.EnterpriseServices)
+#endif
+      {
+        TimeoutInSeconds = ApplicationContext.DefaultTransactionTimeoutInSeconds;
+      }
+      AsyncFlowOption = asyncFlowOption;
     }
 
     /// <summary>
@@ -135,5 +180,10 @@ namespace Csla
     /// </value>
     public int TimeoutInSeconds { get; private set; }
 
+    /// <summary>
+    /// Gets the AsyncFlowOption for this transaction
+    /// </summary>
+    public TransactionScopeAsyncFlowOption AsyncFlowOption { get; private set; } = 
+      TransactionScopeAsyncFlowOption.Suppress;
   }
 }

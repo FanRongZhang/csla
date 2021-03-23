@@ -1,7 +1,7 @@
 ﻿//-----------------------------------------------------------------------
 // <copyright file="DynamicBindingListBase.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This is the base class from which collections</summary>
 //-----------------------------------------------------------------------
@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Csla.Core;
+using Csla.Serialization.Mobile;
 
 namespace Csla
 {
@@ -41,19 +42,21 @@ namespace Csla
   public abstract class DynamicBindingListBase<T> :
     Core.ExtendedBindingList<T>,
     Core.IParent,
-    Server.IDataPortalTarget
-    where T : Core.IEditableBusinessObject, Core.IUndoableObject, Core.ISavable
-  {
+    Server.IDataPortalTarget,
+    IBusinessObject
+    where T : Core.IEditableBusinessObject, Core.IUndoableObject, Core.ISavable, IMobileObject, IBusinessObject
+    {
     /// <summary>
     /// Creates an instance of the object.
     /// </summary>
     public DynamicBindingListBase()
     {
+      InitializeIdentity();
       Initialize();
       AllowNew = true;
     }
 
-    #region Initialize
+#region Initialize
 
     /// <summary>
     /// Override this method to set up event handlers so user
@@ -62,6 +65,41 @@ namespace Csla
     /// </summary>
     protected virtual void Initialize()
     { /* allows subclass to initialize events before any other activity occurs */ }
+
+    #endregion
+
+    #region Identity
+
+    private int _identity = -1;
+
+    int IBusinessObject.Identity
+    {
+      get { return _identity; }
+    }
+
+    private void InitializeIdentity()
+    {
+      _identity = ((IParent)this).GetNextIdentity(_identity);
+    }
+
+    [NonSerialized]
+    [NotUndoable]
+    private IdentityManager _identityManager;
+
+    int IParent.GetNextIdentity(int current)
+    {
+      var me = (IParent)this;
+      if (me.Parent != null)
+      {
+        return me.Parent.GetNextIdentity(current);
+      }
+      else
+      {
+        if (_identityManager == null)
+          _identityManager = new IdentityManager();
+        return _identityManager.GetNextIdentity(current);
+      }
+    }
 
     #endregion
 
@@ -154,9 +192,9 @@ namespace Csla
       return result;
     }
 
-    #endregion
+#endregion
 
-    #region Saved Event
+#region Saved Event
     [NonSerialized]
     [NotUndoable]
     private EventHandler<Csla.Core.SavedEventArgs> _nonSerializableSavedHandlers;
@@ -214,9 +252,9 @@ namespace Csla
         _serializableSavedHandlers.Invoke(this, args);
     }
 
-    #endregion
+#endregion
 
-    #region  Insert, Remove, Clear
+#region  Insert, Remove, Clear
 
     /// <summary>
     /// Adds a new item to the list.
@@ -281,9 +319,9 @@ namespace Csla
       base.SetItem(index, item);
     }
 
-    #endregion
+#endregion
 
-    #region  IParent Members
+#region  IParent Members
 
     void Csla.Core.IParent.ApplyEditChild(Core.IEditableBusinessObject child)
     {
@@ -302,9 +340,9 @@ namespace Csla
       get { return null; }
     }
 
-    #endregion
+#endregion
 
-    #region  Cascade Child events
+#region  Cascade Child events
 
     /// <summary>
     /// Handles any PropertyChanged event from 
@@ -369,9 +407,9 @@ namespace Csla
       return result;
     }
 
-    #endregion
+#endregion
 
-    #region  Serialization Notification
+#region  Serialization Notification
 
     /// <summary>
     /// This method is called on a newly deserialized object
@@ -390,9 +428,9 @@ namespace Csla
       base.OnDeserialized();
     }
 
-    #endregion
+#endregion
 
-    #region  Data Access
+#region  Data Access
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1801:ReviewUnusedParameters", MessageId = "criteria")]
     private void DataPortal_Create(object criteria)
@@ -456,9 +494,9 @@ namespace Csla
 
     }
 
-    #endregion
+#endregion
 
-    #region ToArray
+#region ToArray
 
     /// <summary>
     /// Get an array containing all items in the list.
@@ -471,9 +509,9 @@ namespace Csla
       return result.ToArray();
     }
 
-    #endregion
+#endregion
 
-    #region IDataPortalTarget Members
+#region IDataPortalTarget Members
 
     void Csla.Server.IDataPortalTarget.CheckRules()
     { }
@@ -511,9 +549,9 @@ namespace Csla
     void Csla.Server.IDataPortalTarget.Child_OnDataPortalException(DataPortalEventArgs e, Exception ex)
     { }
 
-    #endregion
+#endregion
 
-    #region IsBusy
+#region IsBusy
 
     /// <summary>
     /// Gets a value indicating whether this object
@@ -532,6 +570,36 @@ namespace Csla
 
         return false;
       }
+    }
+
+    #endregion
+
+    #region Mobile object overrides
+
+    /// <summary>
+    /// Override this method to insert your field values
+    /// into the MobileFormatter serialzation stream.
+    /// </summary>
+    /// <param name="info">
+    /// Object containing the data to serialize.
+    /// </param>
+    protected override void OnGetState(SerializationInfo info)
+    {
+      info.AddValue("Csla.Core.BusinessBase._identity", _identity);
+      base.OnGetState(info);
+    }
+
+    /// <summary>
+    /// Override this method to retrieve your field values
+    /// from the MobileFormatter serialzation stream.
+    /// </summary>
+    /// <param name="info">
+    /// Object containing the data to serialize.
+    /// </param>
+    protected override void OnSetState(SerializationInfo info)
+    {
+      _identity = info.GetValue<int>("Csla.Core.BusinessBase._identity");
+      base.OnSetState(info);
     }
 
     #endregion

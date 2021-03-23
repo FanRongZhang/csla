@@ -1,0 +1,5 @@
+1. Do a Rebuild of the entire solution
+2. Right-click on the solution in Solution Explorer
+   1. Choose Set Startup Projects
+   2. Set everything to None, except DataPortalServer and WpfUI
+3. Press F5 or ctl-F5 to run

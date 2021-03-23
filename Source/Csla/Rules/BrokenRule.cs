@@ -1,12 +1,11 @@
 //-----------------------------------------------------------------------
 // <copyright file="BrokenRule.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>Stores details about a specific broken business rule.</summary>
 //-----------------------------------------------------------------------
 using System;
-using Csla.Serialization;
 using Csla.Core;
 using Csla.Serialization.Mobile;
 
@@ -18,16 +17,11 @@ namespace Csla.Rules
   [Serializable]
   public partial class BrokenRule : MobileObject
   {
-#if SILVERLIGHT || NETFX_CORE
     /// <summary>
-    /// Creates an instance of this object.
+    /// Creates an instance of this type.
     /// </summary>
     public BrokenRule()
     { }
-#else
-    internal BrokenRule()
-    { }
-#endif
 
     private string _ruleName;
     private string _description;

@@ -1,12 +1,11 @@
 //-----------------------------------------------------------------------
 // <copyright file="DataPortalException.cs" company="Marimer LLC">
 //     Copyright (c) Marimer LLC. All rights reserved.
-//     Website: http://www.lhotka.net/cslanet/
+//     Website: https://cslanet.com
 // </copyright>
 // <summary>This exception is returned from the </summary>
 //-----------------------------------------------------------------------
 using System;
-using Csla.Serialization;
 
 namespace Csla.Server
 {
@@ -55,7 +54,7 @@ namespace Csla.Server
       _result = result;
     }
 
-#if !SILVERLIGHT && !NETFX_CORE
+#if !(ANDROID || IOS) && !NETFX_CORE
     /// <summary>
     /// Creates an instance of the object for serialization.
     /// </summary>
@@ -75,8 +74,10 @@ namespace Csla.Server
     /// <param name="info">Serialiation info object.</param>
     /// <param name="context">Serialization context object.</param>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062:ValidateArgumentsOfPublicMethods")]
+#if !NET5_0
     [System.Security.Permissions.SecurityPermission(System.Security.Permissions.SecurityAction.LinkDemand, Flags = System.Security.Permissions.SecurityPermissionFlag.SerializationFormatter)]
     [System.Security.Permissions.SecurityPermission(System.Security.Permissions.SecurityAction.Demand, Flags = System.Security.Permissions.SecurityPermissionFlag.SerializationFormatter)]
+#endif
     public override void GetObjectData(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
     {
       base.GetObjectData(info, context);
